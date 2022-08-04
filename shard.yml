@@ -1,0 +1,14 @@
+name: eyrie
+description: pterodactyl module manager (addons and themes)
+version: 0.1.0
+crystal: 1.5.0
+
+repository: https://github.com/PteroPackages/Eyrie
+authors:
+  - Devonte W <https://github.com/devnote-dev>
+
+targets:
+  eyrie:
+    main: src/eyrie.cr
+
+license: MIT
