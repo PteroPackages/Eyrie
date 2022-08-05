@@ -89,5 +89,29 @@ module Eyrie
     @[YAML::Field(key: "lock_version")]
     property version : Int32
     property modules : Array(ModuleSpec)
+
+    def initialize
+      @version = LOCK_VERSION
+      @modules = [] of ModuleSpec
+    end
+  end
+
+  def self.resolve_lockfile : LockSpec
+    if File.exists? LOCK_PATH
+      begin
+        data = File.read LOCK_PATH
+        LockSpec.from_yaml data
+      rescue ex
+        Log.fatal(ex) { "failed to read lockfile" }
+      end
+    else
+      begin
+        spec = LockSpec.new
+        File.write LOCK_PATH, spec.to_yaml
+        spec
+      rescue ex
+        Log.fatal(ex) { "failed to write lockfile" }
+      end
+    end
   end
 end

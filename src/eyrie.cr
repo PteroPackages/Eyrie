@@ -13,6 +13,9 @@ end
 
 module Eyrie
   VERSION = "0.1.0"
+  LOCK_VERSION = 1
+  MOD_PATH = Path[Dir.current] / "eyrie.modules.yml"
+  LOCK_PATH = Path[Dir.current] / "eyrie.modules.lock"
 
   class Main < Clim
     def self.get_php_version : String?
@@ -37,24 +40,25 @@ module Eyrie
         usage "init [-f|--force]"
         desc "Initializes a module file in the current directory"
         option "-f", "--force", type: Bool, desc: "force initialize the file", default: false
+        option "--lock", type: Bool, desc: "create a lockfile with the modules file", default: false
         ::set_default_opts
         run do |opts, _|
           Log.no_color if opts.no_color
           Log.trace if opts.trace
-          path = Path[Dir.current].join "eyrie.modules.yml"
+          ::Eyrie.resolve_lockfile if opts.lock
 
-          if File.exists?(path)
-            Log.fatal { "eyrie.modules.yml file already exists" } unless opts.force
-            Log.fatal { "cannot write to eyrie.modules.yml file" } unless File.writable?(path)
+          if File.exists? MOD_PATH
+            Log.fatal { "modules file already exists" } unless opts.force
+            Log.fatal { "cannot write to modules file" } unless File.writable?(MOD_PATH)
           end
 
           begin
-            File.write path, Module.new(::Eyrie::Main.get_php_version).to_yaml
+            File.write MOD_PATH, Module.new(::Eyrie::Main.get_php_version).to_yaml
           rescue ex
-            Log.fatal(ex) { "failed to write to eyrie.modules.yml file" }
+            Log.fatal(ex) { "failed to write to modules file" }
           end
 
-          Log.info { "created eyrie.modules.yml file at:\n#{path}" }
+          Log.info { "created modules file at:\n#{MOD_PATH}" }
         end
       end
     end
