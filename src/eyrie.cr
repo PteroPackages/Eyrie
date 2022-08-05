@@ -4,6 +4,7 @@ require "./package"
 
 macro set_default_opts
   option "--no-color", type: Bool, desc: "disable ansi color codes", default: false
+  option "--trace", type: Bool, desc: "log error stack trace", default: false
 
   macro help_macro
     option "-h", "--help", type: Bool, desc: "sends this help message", default: false
@@ -14,6 +15,13 @@ module Eyrie
   VERSION = "0.1.0"
 
   class Main < Clim
+    def self.get_php_version : String?
+      res = `php --version`.strip.chomp
+      return res if $?.success?
+    rescue
+      nil
+    end
+
     main do
       usage "eyrie [options] <command>"
       desc "Pterodactyl Module Manager (addons and themes)"
@@ -32,6 +40,7 @@ module Eyrie
         ::set_default_opts
         run do |opts, _|
           Log.no_color if opts.no_color
+          Log.trace if opts.trace
           path = Path[Dir.current].join "eyrie.modules.yml"
 
           if File.exists?(path)
@@ -40,7 +49,7 @@ module Eyrie
           end
 
           begin
-            File.write path, Module.new.to_yaml
+            File.write path, Module.new(::Eyrie::Main.get_php_version).to_yaml
           rescue ex
             Log.fatal(ex) { "failed to write to eyrie.modules.yml file" }
           end

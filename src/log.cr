@@ -13,7 +13,7 @@ module Eyrie
     end
 
     def self.trace : Nil
-      @@tace = true
+      @@trace = true
     end
 
     def self.no_warnings : Nil
@@ -45,9 +45,10 @@ module Eyrie
     def self.error(ex : Exception, & : ->)
       res = yield
       error { res || ex.message || "an unknown error occured" }
-      # if @@trace
-      #   ex.backtrace.each { |l| error { l } }
-      # end
+      if @@trace
+        error { ex.message || "" } if res
+        ex.backtrace.each { |l| error { l } }
+      end
     end
 
     def self.fatal(& : -> String)
