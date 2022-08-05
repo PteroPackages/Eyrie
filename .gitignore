@@ -4,7 +4,11 @@
 /.shards/
 /.vscode/
 /tests/
+
 shard.lock
+eyrie.modules.yml
+eyrie.modules.lock
+
 *.cmd
 *.dwarf
 *.sh
