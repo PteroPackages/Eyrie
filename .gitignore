@@ -4,6 +4,7 @@
 /.shards/
 /.vscode/
 /tests/
+shard.lock
 *.cmd
 *.dwarf
 *.sh

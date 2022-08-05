@@ -7,6 +7,11 @@ repository: https://github.com/PteroPackages/Eyrie
 authors:
   - Devonte W <https://github.com/devnote-dev>
 
+dependencies:
+  clim:
+    github: at-grandpa/clim
+    version: 0.17.1
+
 targets:
   eyrie:
     main: src/eyrie.cr
