@@ -18,13 +18,6 @@ module Eyrie
   LOCK_PATH = Path[Dir.current] / "eyrie.modules.lock"
 
   class Main < Clim
-    def self.get_php_version : String?
-      res = `php --version`.strip.chomp
-      return res if $?.success?
-    rescue
-      nil
-    end
-
     main do
       usage "eyrie [options] <command>"
       desc "Pterodactyl Module Manager (addons and themes)"
@@ -53,7 +46,7 @@ module Eyrie
           end
 
           begin
-            File.write MOD_PATH, Module.new(::Eyrie::Main.get_php_version).to_yaml
+            File.write MOD_PATH, Module.new.to_yaml
           rescue ex
             Log.fatal(ex) { "failed to write to modules file" }
           end

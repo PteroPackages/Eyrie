@@ -64,12 +64,12 @@ module Eyrie
     property deps     : Deps
     property files    : Files
 
-    def initialize(sup : String?)
+    def initialize
       @name = "module-name"
       @version = "0.0.1"
       @authors = [Author.new("your-name-here", "your@contact.here")]
       @source = Source.new "url-to-source"
-      @supports = sup ? [sup] : [] of String
+      @supports = [] of String
       @deps = Deps.new
       @files = Files.new
     end
