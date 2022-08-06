@@ -12,6 +12,9 @@ dependencies:
     github: at-grandpa/clim
     version: 0.17.1
 
+  semantic_compare:
+    github: j8r/semantic_compare
+
 targets:
   eyrie:
     main: src/eyrie.cr
