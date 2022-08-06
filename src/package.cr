@@ -81,6 +81,21 @@ module Eyrie
     property name     : String
     property version  : String
     property source   : Source
+
+    def initialize(@name, @version, url, type)
+      t = case type
+          when "local"
+            SourceType::Local
+          when "git"
+            SourceType::Git
+          when "github"
+            SourceType::Github
+          else
+            raise "invalid source type '#{type}'"
+          end
+
+      @source = Source.new url, t
+    end
   end
 
   struct LockSpec
