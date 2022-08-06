@@ -1,4 +1,5 @@
 require "clim"
+require "./installer"
 require "./log"
 require "./package"
 
@@ -29,7 +30,6 @@ module Eyrie
       end
 
       sub "init" do
-        alias_name "i"
         usage "init [-f|--force]"
         desc "Initializes a module file in the current directory"
         option "-f", "--force", type: Bool, desc: "force initialize the file", default: false
@@ -52,6 +52,54 @@ module Eyrie
           end
 
           Log.info { "created modules file at:\n#{MOD_PATH}" }
+        end
+      end
+
+      sub "install" do
+        usage "install [-s|--source <url>] [-L|--no-lock] [-v|--verbose]"
+        desc "Installs modules from a source or lockfile"
+        option "-s <url>",
+          "--source <ur>",
+          type: String,
+          desc: "the url to the module source",
+          default: ""
+
+        option "-t <type>",
+          "--type <type>",
+          desc: "the type of source to install from",
+          default: "git"
+
+        option "--version <v>",
+          desc: "a specific version to install",
+          default: "*"
+
+        option "-L",
+          "--no-lock",
+          type: Bool,
+          desc: "don't save the module in the lockfile",
+          default: false
+
+        ::set_default_opts
+        run do |opts, _|
+          Log.no_color if opts.no_color
+          Log.trace if opts.trace
+
+          modules = [] of ModuleSpec
+
+          if opts.source.empty?
+            spec = ::Eyrie.resolve_lockfile
+            modules += spec.modules
+          else
+            begin
+              name = opts.source.split('/').pop.underscore
+              modules << ModuleSpec.new(name, opts.version, opts.source, opts.type)
+            rescue ex
+              Log.fatal(ex) { }
+            end
+          end
+
+          Log.fatal { "no modules found to install" } if modules.empty?
+          Installer.new(opts.no_lock).run(modules)
         end
       end
     end
