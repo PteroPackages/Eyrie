@@ -11,5 +11,7 @@ eyrie.modules.lock
 
 *.cmd
 *.dwarf
+*.exe
+*.pdb
 *.sh
 *.test.*
