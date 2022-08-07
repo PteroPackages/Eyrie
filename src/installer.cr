@@ -12,11 +12,12 @@ module Eyrie
       require_git
       require_cache
 
-      modules.each { |m| validate m }
+      validated = [] of ModuleSpec
+      modules.each { |m| validated << validate m }
       Log.vinfo { "installing packages" }
 
       status = [] of Bool
-      modules.each { |m| status << install m }
+      validated.each { |m| status << install m }
       done = status.select(&.dup).size
 
       Log.info { "installed #{done} of #{status.size} modules" }
@@ -24,8 +25,7 @@ module Eyrie
 
     private def require_git : Nil
       begin
-        status = Process.run "git", ["--version"], shell: true
-        raise("") unless status.success?
+        Process.run "git --version", shell: true
       rescue
         Log.fatal { "git is required for this operation" }
       end
@@ -53,7 +53,7 @@ module Eyrie
       end
     end
 
-    private def validate(mod : ModuleSpec) : Nil
+    private def validate(mod : ModuleSpec) : ModuleSpec
       Log.vinfo { "validating module: #{mod.name}" }
       Log.error { "missing name for module" } if mod.name.empty?
 
@@ -62,15 +62,20 @@ module Eyrie
         Log.fatal { "name can contain: letters, numbers, dashes, and underscores" }
       end
 
-      begin
-        SemanticVersion.parse mod.version
-      rescue ex
-        Log.fatal(ex) { "invalid module version format for module '#{mod.name}" }
+      unless mod.version == "*"
+        begin
+          SemanticVersion.parse mod.version
+        rescue ex
+          Log.fatal(ex) { "invalid module version format for module '#{mod.name}'" }
+        end
       end
 
       if mod.source.type.github? && !mod.source.url.starts_with?("https://github.com")
         mod.source.url = "https://github.com/#{mod.source.url}"
+        puts mod.source.url
       end
+
+      mod
     end
 
     private def install(mod : ModuleSpec) : Bool

@@ -35,16 +35,11 @@ module Eyrie
     end
 
     def self.exec(cmd : String) : Bool
+      Log.vinfo { "cmd: #{cmd}" }
       Process.run cmd, shell: true
       true
-    rescue
-      false
-    end
-
-    def self.exec_in_cache(cmd : String) : Bool
-      Process.run cmd, shell: true, chdir: cache_path.to_s
-      true
-    rescue
+    rescue ex
+      Log.vinfo { "failed to exec: #{ex.to_s}" }
       false
     end
   end

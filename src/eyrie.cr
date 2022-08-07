@@ -66,8 +66,18 @@ module Eyrie
 
         option "-t <type>",
           "--type <type>",
+          type: String,
           desc: "the type of source to install from",
           default: "git"
+
+        option "-v",
+          "--verbose",
+          type: Bool,
+          default: false
+
+        option "--trace",
+          type: Bool,
+          default: false
 
         option "--version <v>",
           desc: "a specific version to install",
@@ -83,6 +93,7 @@ module Eyrie
         run do |opts, _|
           Log.no_color if opts.no_color
           Log.trace if opts.trace
+          Log.verbose if opts.verbose
 
           modules = [] of ModuleSpec
 
