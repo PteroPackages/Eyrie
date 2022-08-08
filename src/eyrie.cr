@@ -15,8 +15,8 @@ end
 module Eyrie
   VERSION = "0.1.0"
   LOCK_VERSION = 1
-  MOD_PATH = Path[Dir.current] / "eyrie.modules.yml"
-  LOCK_PATH = Path[Dir.current] / "eyrie.modules.lock"
+  MOD_PATH = Path[Dir.current] / "eyrie.module.yml"
+  LOCK_PATH = Path[Dir.current] / "eyrie.module.lock"
 
   class Main < Clim
     main do
@@ -117,4 +117,8 @@ module Eyrie
   end
 end
 
-Eyrie::Main.start ARGV
+begin
+  Eyrie::Main.start ARGV
+rescue ex
+  Eyrie::Log.fatal(ex) { }
+end

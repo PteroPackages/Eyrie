@@ -146,7 +146,7 @@ module Eyrie
     end
 
     private def require_mod(spec : ModuleSpec) : Module?
-      path = Resolver.cache_path / spec.name / "eyrie.modules.yml"
+      path = Resolver.cache_path / spec.name / "eyrie.module.yml"
       unless File.exists? path
         Log.error { "modules file not found for '#{spec.name}'" }
         return
