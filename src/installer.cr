@@ -1,3 +1,4 @@
+require "semantic_compare"
 require "semantic_version"
 require "./package"
 require "./resolvers/*"
@@ -9,68 +10,67 @@ module Eyrie
     end
 
     def run(modules : Array(ModuleSpec)) : Nil
-      require_git
-      require_cache
-      require_panel_path
+      check_prerequisites
 
       validated = [] of ModuleSpec
       modules.each { |s| validated << validate_spec s }
-      Log.info { "installing packages" }
 
       s = validated.size
-      validated.each do |spec|
-        next unless install(spec)
-        if mod = require_mod(spec)
-          process(mod)
+      validated.each_with_index do |spec, i|
+        next unless install spec
+        if process spec
+          Log.info { "[#{i+1}/#{s}] installed: #{spec.name}" }
+        else
+          next
         end
       end
     end
 
-    private def require_git : Nil
-      begin
-        Process.run "git --version", shell: true
-      rescue
-        Log.fatal { "git is required for this operation" }
-      end
-    end
-
-    private def require_cache : Nil
-      Log.vinfo { "ensuring cache availability" }
-      path = Resolver.cache_path
-
-      unless File.exists?(path) && File.directory?(path)
-        Log.warn { "cache directory not found, attempting to create" }
-        begin
-          Dir.mkdir_p path
-        rescue ex
-          Log.fatal(ex) { }
-        end
-      end
-
-      unless Dir.empty? path
-        begin
-          Dir.entries(path).each { |e| File.delete e }
-        rescue
-          Log.warn { "failed to clear old files from cache" }
-        end
-      end
-    end
-
-    private def require_panel_path : Nil
-      Log.vinfo { "checking panel path availability" }
-
+    private def check_prerequisites : Nil
+      Log.vinfo { "checking panel availability" }
       unless Dir.exists? "/var/www/pterodactyl"
-        Log.fatal { "panel root path not found (path: /var/www/pterodactyl)" }
+        Log.fatal { "panel root directory not found (path: /var/www/pterodactyl)" }
       end
+
+      Log.vinfo { "checking cache availability" }
+      unless Dir.exists? "/var/eyrie/cache"
+        Log.vinfo { "cache directory not found; attempting to create" }
+        begin
+          Dir.mkdir_p "/var/eyrie/cache"
+        rescue ex
+          Log.fatal(ex) { "failed to create cache directory" }
+        end
+      end
+
+      unless Dir.empty? "/var/eyrie/cache"
+        Log.vinfo { "cache directory not empty; attempting clean" }
+        Dir.glob("/var/eyrie/cache")[1..].each do |path|
+          begin
+            File.delete path
+          rescue
+            Log.vwarn { "failed to remove cached path:" }
+            Log.vwarn { path }
+          end
+        end
+      end
+
+      Log.vinfo { "checking git availability" }
+      begin
+        `git --version`
+      rescue ex
+        Log.fatal(ex) { "git is required for this operation" }
+      end
+
+      Log.vinfo { "prerequisite checks completed" }
     end
 
     private def validate_spec(spec : ModuleSpec) : ModuleSpec
       Log.vinfo { "validating module: #{spec.name}" }
       Log.error { "missing name for module" } if spec.name.empty?
 
-      if spec.name =~ %r[[^a-zA-Z0-9_-]]
+      if spec.name =~ %r[[^a-z0-9_-]]
         Log.error { "invalid module name format '#{spec.name}'" }
-        Log.fatal { "name can contain: letters, numbers, dashes, and underscores" }
+        Log.fatal { "name can contain: lowercase letters, numbers, dashes, and underscores" }
       end
 
       unless spec.version == "*"
@@ -91,9 +91,9 @@ module Eyrie
     end
 
     private def validate_mod(mod : Module) : Bool
-      if mod.name =~ %r[[^a-zA-Z0-9_-]]
+      if mod.name =~ %r[[^a-z0-9_-]]
         Log.error { "invalid module name format '#{mod.name}'" }
-        Log.fatal { "name can contain: letters, numbers, dashes, and underscores" }
+        Log.error { "name can contain: lowercase letters, numbers, dashes, and underscores" }
         return false
       end
 
@@ -165,7 +165,84 @@ module Eyrie
       mod
     end
 
-    private def process(mod : Module) : Nil
+    private def exec(dir : String, command : String) : Exception?
+      begin
+        Process.exec command, shell: true, chdir: dir
+      rescue ex
+        ex
+      end
+    end
+
+    private def process(spec : ModuleSpec) : Bool
+      mod = require_mod spec
+      return false unless mod
+      root = "/var/www/pterodactyl"
+
+      unless File.exists? "#{root}/config/app.php"
+        Log.error { "panel 'app.php' config file not found; cannot continue" }
+        return false
+      end
+
+      info = File.read "#{root}/config/app.php"
+      info =~ /'version' \=\> '(.*)'/
+      unless $1?
+        Log.error { "could not get panel version from config" }
+        return false
+      end
+
+      valid : String? = nil
+      if mod.supports.any? { |v| v.match %r[[*~<>=^]+] }
+        parsed = SemanticVersion.try &.parse $1
+        unless parsed
+          Log.error { "failed to parse panel version" }
+          return false
+        end
+
+        valid = mod.supports.find { |v| SemanticCompare.simple_expression parsed, v }
+      else
+        valid = mod.supports.find { |v| v == $1 }
+      end
+
+      unless valid
+        Log.error { "this module does not support panel version #{$1}" }
+        return false
+      end
+
+      loc = Resolver.cache_path / spec.name
+      Dir.cd(loc) do
+        includes = Dir.glob mod.files.include
+        excludes = Dir.glob mod.files.exclude
+
+        includes.reject! { |f| f.in? excludes }
+
+        includes.each do |path|
+          if File.exists? (dest = File.join(root, path))
+            Log.vinfo { "attempting to remove existing resource path:" }
+            Log.vinfo { dest }
+            begin
+              File.delete dest
+            rescue
+              Log.vwarn { "failed to remove file; attempting overwrite" }
+              data = File.read loc / path
+              begin
+                File.write dest, data
+              rescue ex
+                Log.error(ex) { "failed to overwrite resource path" }
+                next
+              end
+            end
+          end
+
+          begin
+            File.copy path, File.join(loc / path)
+          rescue ex
+            Log.error(ex) { "failed to move resource path:" }
+            Log.error { path }
+          end
+        end
+      end
+
+      true
     end
   end
 end

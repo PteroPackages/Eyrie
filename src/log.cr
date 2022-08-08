@@ -34,8 +34,12 @@ module Eyrie
 
     def self.warn(& : -> String)
       if @@warn
-        STDOUT.puts "warning".colorize(:yellow).to_s + ": " + yield
+        STDOUT.puts "warn".colorize(:yellow).to_s + ": " + yield
       end
+    end
+
+    def self.vwarn(& : -> String)
+      warn { yield } if @@verbose
     end
 
     def self.error(& : -> String)
