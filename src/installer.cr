@@ -11,16 +11,19 @@ module Eyrie
     def run(modules : Array(ModuleSpec)) : Nil
       require_git
       require_cache
+      require_panel_path
 
       validated = [] of ModuleSpec
-      modules.each { |m| validated << validate m }
-      Log.vinfo { "installing packages" }
+      modules.each { |m| validated << validate_spec m }
+      Log.info { "installing packages" }
 
-      status = [] of Bool
-      validated.each { |m| status << install m }
-      done = status.select(&.dup).size
-
-      Log.info { "installed #{done} of #{status.size} modules" }
+      s = validated.size
+      validated.each do |mod|
+        next unless install(mod)
+        if cfg = require_mod(mod)
+          process(cfg)
+        end
+      end
     end
 
     private def require_git : Nil
@@ -53,7 +56,17 @@ module Eyrie
       end
     end
 
-    private def validate(mod : ModuleSpec) : ModuleSpec
+    private def require_panel_path : Nil
+      Log.vinfo { "checking panel path availability" }
+
+      root = Path["var"] / "www" / "pterodactyl"
+      unless File.exists? root
+        Log.error { "panel root path not found" }
+        Log.fatal { "default location is #{root}; ensure path is available" }
+      end
+    end
+
+    private def validate_spec(mod : ModuleSpec) : ModuleSpec
       Log.vinfo { "validating module: #{mod.name}" }
       Log.error { "missing name for module" } if mod.name.empty?
 
@@ -70,24 +83,91 @@ module Eyrie
         end
       end
 
-      if mod.source.type.github? && !mod.source.url.starts_with?("https://github.com")
-        mod.source.url = "https://github.com/#{mod.source.url}"
-        puts mod.source.url
-      end
+      {% for src in %w(github gitlab) %}
+        if mod.source.type.{{ src.id }}? && !mod.source.url.starts_with?("https://{{ src.id }}.com")
+          mod.source.url = "https://{{ src.id }}.com/#{mod.source.url}"
+        end
+      {% end %}
 
       mod
     end
 
+    private def validate_mod(mod : Module) : Bool
+      if mod.name =~ %r[[^a-zA-Z0-9_-]]
+        Log.error { "invalid module name format '#{mod.name}'" }
+        Log.fatal { "name can contain: letters, numbers, dashes, and underscores" }
+        return false
+      end
+
+      begin
+        SemanticVersion.parse mod.version
+      rescue ex
+        Log.error(ex) { "failed to parse module version" }
+        return false
+      end
+
+      if mod.authors.empty?
+        Log.warn { "no authors set for package" }
+      else
+        mod.authors.each do |author|
+          Log.warn { "missing name for author" } if author.name.empty?
+          Log.warn { "missing contact for author" } if author.contact.empty?
+        end
+      end
+
+      if mod.supports.empty?
+        Log.error { "no supported panel versions specified; cannot install module" }
+        return false
+      end
+
+      if mod.files.include.empty?
+        Log.error { "no include paths specified; cannot assume files to process" }
+        return false
+      end
+
+      true
+    end
+
     private def install(mod : ModuleSpec) : Bool
+      Log.info { "installing: #{mod.name}" }
       res = false
 
-      case mod.source.type
-      in SourceType::Local  then res = LocalResolver.run mod
-      in SourceType::Git    then res = GitResolver.run mod
-      in SourceType::Github then res = GithubResolver.run mod
+      if mod.source.type.local?
+        res = LocalResolver.run mod
+      else
+        res = GitResolver.run mod
+      end
+
+      if res
+        Log.info { "module #{mod.name}: installed" }
+      else
+        Log.info { "module #{mod.name}: failed" }
       end
 
       res
+    end
+
+    private def require_mod(mod : ModuleSpec) : Module?
+      path = Resolver.cache_path / mod.name / "eyrie.modules.yml"
+      unless File.exists? path
+        Log.error { "modules file not found for '#{mod.name}'" }
+        return
+      end
+
+      cfg = uninitialized Module
+      begin
+        data = File.read path
+        cfg = Module.from_yaml data
+      rescue ex : YAML::ParseException
+        Log.error(ex) { "failed to parse modules file" }
+      rescue ex
+        Log.error(ex) { }
+      end
+
+      cfg
+    end
+
+    private def process(cfg : Module) : Nil
     end
   end
 end

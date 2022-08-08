@@ -14,7 +14,7 @@ module Eyrie
     Local
     Git
     Github
-    # Gitlab
+    Gitlab
   end
 
   struct Source
@@ -59,7 +59,7 @@ module Eyrie
     property name     : String
     property version  : String
     property authors  : Array(Author)
-    property source   : Source
+    property source   : Source?
     property supports : Array(String)
     property deps     : Deps
     property files    : Files
