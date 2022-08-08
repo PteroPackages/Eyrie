@@ -14,14 +14,14 @@ module Eyrie
       require_panel_path
 
       validated = [] of ModuleSpec
-      modules.each { |m| validated << validate_spec m }
+      modules.each { |s| validated << validate_spec s }
       Log.info { "installing packages" }
 
       s = validated.size
-      validated.each do |mod|
-        next unless install(mod)
-        if cfg = require_mod(mod)
-          process(cfg)
+      validated.each do |spec|
+        next unless install(spec)
+        if mod = require_mod(spec)
+          process(mod)
         end
       end
     end
@@ -59,37 +59,35 @@ module Eyrie
     private def require_panel_path : Nil
       Log.vinfo { "checking panel path availability" }
 
-      root = Path["var"] / "www" / "pterodactyl"
-      unless File.exists? root
-        Log.error { "panel root path not found" }
-        Log.fatal { "default location is #{root}; ensure path is available" }
+      unless Dir.exists? "/var/www/pterodactyl"
+        Log.fatal { "panel root path not found (path: /var/www/pterodactyl)" }
       end
     end
 
-    private def validate_spec(mod : ModuleSpec) : ModuleSpec
-      Log.vinfo { "validating module: #{mod.name}" }
-      Log.error { "missing name for module" } if mod.name.empty?
+    private def validate_spec(spec : ModuleSpec) : ModuleSpec
+      Log.vinfo { "validating module: #{spec.name}" }
+      Log.error { "missing name for module" } if spec.name.empty?
 
-      if mod.name =~ %r[[^a-zA-Z0-9_-]]
-        Log.error { "invalid module name format '#{mod.name}'" }
+      if spec.name =~ %r[[^a-zA-Z0-9_-]]
+        Log.error { "invalid module name format '#{spec.name}'" }
         Log.fatal { "name can contain: letters, numbers, dashes, and underscores" }
       end
 
-      unless mod.version == "*"
+      unless spec.version == "*"
         begin
-          SemanticVersion.parse mod.version
+          SemanticVersion.parse spec.version
         rescue ex
-          Log.fatal(ex) { "invalid module version format for module '#{mod.name}'" }
+          Log.fatal(ex) { "invalid module version format for module '#{spec.name}'" }
         end
       end
 
       {% for src in %w(github gitlab) %}
-        if mod.source.type.{{ src.id }}? && !mod.source.url.starts_with?("https://{{ src.id }}.com")
-          mod.source.url = "https://{{ src.id }}.com/#{mod.source.url}"
+        if spec.source.type.{{ src.id }}? && !spec.source.url.starts_with?("https://{{ src.id }}.com")
+        spec.source.url = "https://{{ src.id }}.com/#{spec.source.url}"
         end
       {% end %}
 
-      mod
+      spec
     end
 
     private def validate_mod(mod : Module) : Bool
@@ -128,46 +126,46 @@ module Eyrie
       true
     end
 
-    private def install(mod : ModuleSpec) : Bool
-      Log.info { "installing: #{mod.name}" }
+    private def install(spec : ModuleSpec) : Bool
+      Log.info { "installing: #{spec.name}" }
       res = false
 
-      if mod.source.type.local?
-        res = LocalResolver.run mod
+      if spec.source.type.local?
+        res = LocalResolver.run spec
       else
-        res = GitResolver.run mod
+        res = GitResolver.run spec
       end
 
       if res
-        Log.info { "module #{mod.name}: installed" }
+        Log.info { "module #{spec.name}: installed" }
       else
-        Log.info { "module #{mod.name}: failed" }
+        Log.info { "module #{spec.name}: failed" }
       end
 
       res
     end
 
-    private def require_mod(mod : ModuleSpec) : Module?
-      path = Resolver.cache_path / mod.name / "eyrie.modules.yml"
+    private def require_mod(spec : ModuleSpec) : Module?
+      path = Resolver.cache_path / spec.name / "eyrie.modules.yml"
       unless File.exists? path
-        Log.error { "modules file not found for '#{mod.name}'" }
+        Log.error { "modules file not found for '#{spec.name}'" }
         return
       end
 
-      cfg = uninitialized Module
+      mod = uninitialized Module
       begin
         data = File.read path
-        cfg = Module.from_yaml data
+        mod = Module.from_yaml data
       rescue ex : YAML::ParseException
         Log.error(ex) { "failed to parse modules file" }
       rescue ex
         Log.error(ex) { }
       end
 
-      cfg
+      mod
     end
 
-    private def process(cfg : Module) : Nil
+    private def process(mod : Module) : Nil
     end
   end
 end

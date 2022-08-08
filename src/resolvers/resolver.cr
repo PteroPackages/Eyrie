@@ -3,11 +3,7 @@ require "../package"
 module Eyrie
   abstract class Resolver
     def self.cache_path : Path
-      {% if flag?(:win32) %}
-        Path[ENV["APPDATA"]].join "eyrie", "cache"
-      {% else %}
-        Path["/var/eyrie/cache"]
-      {% end %}
+      Path["/var/eyrie/cache"]
     end
 
     def self.run(mod : ModuleSpec) : Bool
