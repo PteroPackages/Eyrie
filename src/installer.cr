@@ -1,13 +1,17 @@
 require "./processor"
+require "./resolvers/*"
 
 module Eyrie::Installer
   def self.run(specs : Array(ModuleSpec), lock : Bool) : Nil
     check_prerequisites
 
-    begin
-      specs.each &.validate
-    rescue ex
-      Log.error { "failed to validate module: #{ex.message}" }
+    specs.each do |spec|
+      begin
+        spec.validate
+      rescue ex
+        Log.error { "failed to validate module spec '#{spec.name}':" }
+        Log.fatal(ex) { }
+      end
     end
 
     start = Time.monotonic

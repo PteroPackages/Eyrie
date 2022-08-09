@@ -1,6 +1,6 @@
 require "semantic_compare"
 require "semantic_version"
-require "../package"
+require "./package"
 
 module Eyrie::Processor
   PANEL_PATH = Path["/var/www/pterodactyl"]
@@ -88,7 +88,7 @@ module Eyrie::Processor
           Log.vinfo { "destination exists; attempting overwrite" }
           data = File.read file
           begin
-            File.write data
+            File.write dest, data
           rescue ex
             Log.error(ex) { "failed overwriting destination path" }
           end
@@ -104,24 +104,27 @@ module Eyrie::Processor
   end
 
   private def self.install_deps(deps : Deps) : Nil
-    unless deps.composer.empty?
+    install = deps.install
+    return unless install
+
+    unless install.composer.empty?
       if ex = exec "composer --version"
         Log.error(ex) { "cannot install php dependencies without composer" }
       end
 
-      deps.composer.each do |name, version|
+      install.composer.each do |name, version|
         if ex = exec %(composer require "#{name}" #{version})
           Log.error(ex) { "dependency '#{name}' failed to install" }
         end
       end
     end
 
-    unless deps.npm.empty?
+    unless install.npm.empty?
       if ex = exec "npm --version"
         Log.error(ex) { "cannot install node dependencies without npm" }
       end
 
-      deps.npm.each do |name, version|
+      install.npm.each do |name, version|
         name += "@#{version}" unless version.empty?
         if ex = exec "npm install --no-fund #{name}"
           Log.error(ex) { "dependency '#{name}' failed to install" }

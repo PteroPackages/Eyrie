@@ -15,8 +15,8 @@ end
 module Eyrie
   VERSION = "0.1.0"
   LOCK_VERSION = 1
-  MOD_PATH = Path[Dir.current] / "eyrie.module.yml"
-  LOCK_PATH = Path[Dir.current] / "eyrie.module.lock"
+  MOD_PATH = File.join Dir.current, "eyrie.module.yml"
+  LOCK_PATH = File.join Dir.current, "eyrie.module.lock"
 
   class Main < Clim
     main do
@@ -102,7 +102,7 @@ module Eyrie
             modules += spec.modules
           else
             begin
-              name = opts.source.split('/').pop.underscore
+              name = opts.source.split('/').pop.downcase.underscore
               modules << ModuleSpec.new(name, opts.version, opts.source, opts.type)
             rescue ex
               Log.fatal(ex) { }
@@ -110,7 +110,7 @@ module Eyrie
           end
 
           Log.fatal { "no modules found to install" } if modules.empty?
-          Installer.new(opts.no_lock).run(modules)
+          Installer.run modules, opts.no_lock
         end
       end
     end

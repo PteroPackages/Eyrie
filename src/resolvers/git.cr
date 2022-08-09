@@ -4,7 +4,6 @@ module Eyrie
   class GitResolver < Resolver
     def self.run(mod : ModuleSpec) : Bool
       path = cache_path / mod.name
-      return false unless rewrite path
 
       done = false
       3.times do

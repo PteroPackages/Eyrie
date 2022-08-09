@@ -25,6 +25,14 @@ module Eyrie
     property type : SourceType
 
     def initialize(@url, @type = :git); end
+
+    def validate : Nil
+      {% for src in %w(github gitlab) %}
+        if @type.{{ src.id }}? && !@url.starts_with?("https://{{ src.id }}.com")
+          @url = "https://{{ src.id }}.com/#{@url}"
+        end
+      {% end %}
+    end
   end
 
   struct CmdDepSpec
@@ -76,7 +84,7 @@ module Eyrie
     property supports   : Array(String)
     property deps       : Deps
     property files      : Files
-    property postintall : Array(String)
+    property postinstall : Array(String)
 
     def initialize
       @name = "module-name"
@@ -90,14 +98,14 @@ module Eyrie
     end
 
     def validate : Nil
-      unless @name =~ %r[[^a-z0-9_-]]
-        raise "name can contain: lowercase letters, numbers, dashes, and underscores"
+      if @name =~ %r[[^a-z0-9_-]]
+        raise "name can only contain lowercase letters, numbers, dashes, and underscores"
       end
 
       begin
         SemanticVersion.parse @version
       rescue ex
-        raise Exception.new "invalid version format", cause: ex
+        raise Exception.new "invalid version format '#{@version}'", cause: ex
       end
 
       raise "no supported panel versions set" if @supports.empty?
@@ -128,6 +136,22 @@ module Eyrie
           end
 
       @source = Source.new url, t
+    end
+
+    def validate : Nil
+      if @name =~ %r[[^a-z0-9_-]]
+        raise "name can only contain lowercase letters, numbers, dashes, and underscores"
+      end
+
+      unless @version == "*"
+        begin
+          SemanticVersion.parse @version
+        rescue ex
+          raise Exception.new "invalid version format '#{@version}'", cause: ex
+        end
+      end
+
+      @source.validate
     end
   end
 
