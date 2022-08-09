@@ -1,3 +1,4 @@
+require "semantic_version"
 require "yaml"
 
 module Eyrie
@@ -26,15 +27,27 @@ module Eyrie
     def initialize(@url, @type = :git); end
   end
 
+  struct CmdDepSpec
+    include YAML::Serializable
+
+    property composer : Hash(String, String)
+    property npm      : Hash(String, String)
+
+    def initialize
+      @composer = {} of String => String
+      @npm = {} of String => String
+    end
+  end
+
   struct Deps
     include YAML::Serializable
 
-    property install  : Hash(String, String)
-    property remove   : Hash(String, String)
+    property install  : CmdDepSpec?
+    property remove   : CmdDepSpec?
 
     def initialize
-      @install = {} of String => String
-      @remove = {} of String => String
+      @install = CmdDepSpec.new
+      @remove = CmdDepSpec.new
     end
   end
 
@@ -56,13 +69,14 @@ module Eyrie
   struct Module
     include YAML::Serializable
 
-    property name     : String
-    property version  : String
-    property authors  : Array(Author)
-    property source   : Source?
-    property supports : Array(String)
-    property deps     : Deps
-    property files    : Files
+    property name       : String
+    property version    : String
+    property authors    : Array(Author)
+    property source     : Source?
+    property supports   : Array(String)
+    property deps       : Deps
+    property files      : Files
+    property postintall : Array(String)
 
     def initialize
       @name = "module-name"
@@ -72,6 +86,25 @@ module Eyrie
       @supports = [] of String
       @deps = Deps.new
       @files = Files.new
+      @postinstall = [] of String
+    end
+
+    def validate : Nil
+      unless @name =~ %r[[^a-z0-9_-]]
+        raise "name can contain: lowercase letters, numbers, dashes, and underscores"
+      end
+
+      begin
+        SemanticVersion.parse @version
+      rescue ex
+        raise Exception.new "invalid version format", cause: ex
+      end
+
+      raise "no supported panel versions set" if @supports.empty?
+
+      if @files.include.empty?
+        raise "no files included, cannot assume files to install"
+      end
     end
   end
 
