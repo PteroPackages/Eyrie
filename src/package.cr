@@ -82,7 +82,7 @@ module Eyrie
     property authors    : Array(Author)
     property source     : Source?
     property supports   : Array(String)
-    property deps       : Deps = Deps.new
+    property deps       : Deps
     property files      : Files
     property postinstall : Array(String)
 
@@ -92,6 +92,7 @@ module Eyrie
       @authors = [Author.new("your-name-here", "your@contact.here")]
       @source = Source.new "url-to-source"
       @supports = [] of String
+      @deps = Deps.new
       @files = Files.new
       @postinstall = [] of String
     end
@@ -113,6 +114,10 @@ module Eyrie
         raise "no files included, cannot assume files to install"
       end
     end
+
+    def to_spec : ModuleSpec
+      ModuleSpec.new @name, @version, @source || Source.new("", :local)
+    end
   end
 
   struct ModuleSpec
@@ -121,6 +126,8 @@ module Eyrie
     property name     : String
     property version  : String
     property source   : Source
+
+    def initialize(@name, @version, @source); end
 
     def initialize(@name, @version, url, type)
       t = case type

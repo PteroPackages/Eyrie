@@ -21,23 +21,22 @@ module Eyrie::Installer
         modules << mod
       end
     end
+    Log.fatal { "no modules could be resolved" } if modules.empty?
 
-    if modules.empty?
-      Log.fatal { "no modules could be resolved" }
-    end
-
-    Processor.check_panel
-    done = 0
+    v = Processor.get_panel_version
+    done = [] of Module
 
     modules.each do |mod|
-      if Processor.exec mod
+      if Processor.run mod, v
         Log.info { "module #{mod.name} installed" }
-        done += 1
+        done << mod
       end
     end
 
+    write_lockfile(done) if lock
+
     taken = Time.monotonic - start
-    Log.info { "installed #{done} modules in #{taken.nanoseconds}ms" }
+    Log.info { "installed #{done.size} modules in #{taken.nanoseconds}ms" }
   end
 
   private def self.check_prerequisites : Nil
@@ -110,5 +109,16 @@ module Eyrie::Installer
     end
 
     mod
+  end
+
+  private def self.write_lockfile(mods : Array(Module)) : Nil
+    spec = LockSpec.new
+    spec.modules = mods.map &.to_spec
+
+    begin
+      File.write LOCK_PATH, spec.to_yaml
+    rescue ex
+      Log.error(ex) { "failed to save lockfile" }
+    end
   end
 end

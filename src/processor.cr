@@ -6,7 +6,7 @@ module Eyrie::Processor
   PANEL_PATH = Path["/var/www/pterodactyl"]
   CACHE_PATH = Path["/var/eyrie/cache"]
 
-  def self.check_panel : Nil
+  def self.get_panel_version : String
     config = PANEL_PATH / "config" / "app.php"
     unless File.exists? config
       Log.error { "panel 'app.php' config file not found" }
@@ -19,9 +19,16 @@ module Eyrie::Processor
       Log.error { "could not get panel version from config" }
       Log.fatal { "cannot install modules; terminating" }
     end
+
+    if $1 == "canary"
+      Log.error { "canary builds of the panel are not supported" }
+      Log.fatal { "please install an official version of the panel to use this application" }
+    end
+
+    $1
   end
 
-  def self.exec(mod : Module) : Bool
+  def self.run(mod : Module, version : String) : Bool
     begin
       mod.validate
     rescue ex
@@ -40,7 +47,7 @@ module Eyrie::Processor
 
     valid : String? = nil
     if mod.supports.any? { |v| v.match %r[[*~<>=^]+] }
-      parsed = SemanticVersion.try &.parse $1
+      parsed = SemanticVersion.try &.parse version
       unless parsed
         Log.error { "failed to parse panel version" }
         return false
@@ -48,7 +55,7 @@ module Eyrie::Processor
 
       valid = mod.supports.find { |v| SemanticCompare.simple_expression parsed, v }
     else
-      valid = mod.supports.find { |v| v == $1 }
+      valid = mod.supports.find { |v| v == version }
     end
 
     unless valid
