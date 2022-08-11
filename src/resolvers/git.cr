@@ -2,18 +2,23 @@ require "./resolver"
 
 module Eyrie
   class GitResolver < Resolver
-    def self.run(mod : ModuleSpec) : Bool
-      path = cache_path / mod.name
+    def self.run(spec : ModuleSpec) : Bool
+      cache = File.join "/var/eyrie/cache", spec.name
+      count = 0
 
-      done = false
-      3.times do
-        next if done
-        Log.vinfo { "cloning: #{mod.source.url}" }
-        done = exec "git clone -c core.askPass=true #{mod.source.url} #{path}"
+      loop do
+        Log.vinfo { "cloning: #{spec.source.url}" }
+        if ex = exec "git clone -c core.askPass=true #{spec.source.url} #{cache}"
+          Log.error(ex) { "failed to clone repository" }
+          break if count == 0
+          count += 1
+          Log.vinfo { "retrying (attempt #{count+1})" }
+        end
+
+        return true
       end
 
-      Log.error { "failed to clone repository for '#{mod.name}'" } unless done
-      done
+      false
     end
   end
 end
