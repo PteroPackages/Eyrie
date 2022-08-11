@@ -4,7 +4,7 @@ require "./processor"
 require "./resolvers/*"
 
 module Eyrie::Installer
-  def self.run(specs : Array(ModuleSpec), lock : Bool) : Nil
+  def self.run(specs : Array(ModuleSpec), no_lock : Bool) : Nil
     Log.vinfo "checking panel availability"
     proc = Processor.new "/var/www/pterodactyl"
 
@@ -51,17 +51,18 @@ module Eyrie::Installer
     end
 
     Log.fatal "no modules could be resolved" if modules.empty?
-    Log.info "installing #{modules.size} module#{"s" if modules.size > 1}"
+    Log.info "installing #{modules.size} module#{"s" if modules.size != 1}"
 
     done = [] of Module
     modules.each do |mod|
       done << mod if proc.run mod
     end
 
-    write_lockfile(done) if lock
+    Log.fatal "no modules were installed" if done.empty?
+    write_lockfile(done) unless no_lock
 
     taken = Time.monotonic - start
-    Log.info "installed #{done.size} module#{"s" if done.size > 1} in #{taken.nanoseconds}ms"
+    Log.info "installed #{done.size} module#{"s" if done.size != 1} in #{taken.milliseconds}ms"
   end
 
   private def self.install(spec : ModuleSpec) : Module?

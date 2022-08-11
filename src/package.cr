@@ -32,6 +32,8 @@ module Eyrie
           @url = "https://{{ src.id }}.com/#{@url}"
         end
       {% end %}
+
+      @url += ".git" unless @type.local? && @url.ends_with?(".git")
     end
   end
 

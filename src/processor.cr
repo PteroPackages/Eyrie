@@ -52,9 +52,31 @@ module Eyrie
     def run(mod : Module) : Bool
       Log.warn "no authors set for the package" if mod.authors.empty?
 
+      # TODO: attempt to fix invalid version formats (+.0)?
+      # still warn about them
+      supports = [] of String
+      mod.supports.each do |v|
+        if v.match %r[[*~<|>=^]*\d\.\d(\.\d)?]
+          if $1?
+            supports << v
+            next
+          end
+        end
+
+        Log.warn [
+          "cannot accept version requirement '#{v}'",
+          "version requirements must be in the major.minor.patch format"
+        ]
+      end
+
+      if supports.empty?
+        Log.error "no supported versions were in the expected version format"
+        return false
+      end
+
       valid = false
-      if mod.supports.any? { |v| v.match %r[[*~<|>=^]+] }
-        mod.supports.each do |v|
+      if supports.any? { |v| v.match %r[[*~<|>=^]+] }
+        supports.each do |v|
           if v.includes? '|'
             valid = SemanticCompare.complex_expression @version, v
           else
@@ -101,7 +123,7 @@ module Eyrie
         begin
           FileUtils.cp includes, @panel_path
         rescue ex
-          Log.error "failed to move module files to destination"
+          Log.error ex, "failed to move module files to destination"
           Log.vinfo ["failed:"] + includes
           return false
         end
