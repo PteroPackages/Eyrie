@@ -33,67 +33,67 @@ module Eyrie
         usage "init [-f|--force]"
         desc "Initializes a module file in the current directory"
         option "-f", "--force", type: Bool, desc: "force initialize the file", default: false
-        option "--lock", type: Bool, desc: "create a lockfile with the modules file", default: false
+        option "--lock", type: Bool, desc: "create a lockfile with the module file", default: false
         ::set_default_opts
         run do |opts, _|
           Log.no_color if opts.no_color
           Log.trace if opts.trace
-          ::Eyrie.resolve_lockfile if opts.lock
+          if opts.lock
+            if File.exists?(LOCK_PATH) && !opts.force
+              Log.error { "lockfile already exists" }
+            else
+              begin
+                File.write LOCK_PATH, LockSpec.new.to_yaml
+                Log.info { "created lockfile at:\n#{LOCK_PATH}" }
+              rescue ex
+                Log.error(ex) { "failed to write to lockfile" }
+              end
+            end
+          end
 
           if File.exists? MOD_PATH
             Log.fatal { "modules file already exists" } unless opts.force
-            Log.fatal { "cannot write to modules file" } unless File.writable?(MOD_PATH)
           end
 
           begin
             File.write MOD_PATH, Module.new.to_yaml
+            Log.info { "created modules file at:\n#{MOD_PATH}" }
           rescue ex
-            Log.fatal(ex) { "failed to write to modules file" }
+            Log.error(ex) { "failed to write to modules file" }
           end
-
-          Log.info { "created modules file at:\n#{MOD_PATH}" }
         end
       end
 
       sub "install" do
         usage "install [-s|--source <url>] [-L|--no-lock] [-v|--verbose]"
         desc "Installs modules from a source or lockfile"
-        option "-s <url>",
-          "--source <ur>",
-          type: String,
-          desc: "the url to the module source",
-          default: ""
+        option "-s <url>", "--source <ur>",
+          type: String, desc: "the url to the module source", default: ""
 
-        option "-t <type>",
-          "--type <type>",
-          type: String,
-          desc: "the type of source to install from",
-          default: "git"
+        option "-t <type>", "--type <type>",
+          type: String, desc: "the type of source to install from", default: "git"
 
-        option "-v",
-          "--verbose",
-          type: Bool,
-          default: false
+        option "-v", "--verbose",
+          type: Bool, desc: "output verbose and debug logs", default: false
 
         option "--trace",
-          type: Bool,
-          default: false
+          type: Bool, desc: "log error stack traces if present", default: false
 
         option "--version <v>",
-          desc: "a specific version to install",
-          default: "*"
+          type: String, desc: "a specific version to install", default: "*"
 
-        option "-L",
-          "--no-lock",
-          type: Bool,
-          desc: "don't save the module in the lockfile",
-          default: false
+        option "-L", "--no-lock",
+          type: Bool, desc: "don't save the module in the lockfile", default: false
 
         ::set_default_opts
         run do |opts, _|
           Log.no_color if opts.no_color
           Log.trace if opts.trace
           Log.verbose if opts.verbose
+
+          {% if flag?(:win32) %}
+            Log.fatal { "this command cannot be used on windows systems yet" }
+          {% end %}
 
           modules = [] of ModuleSpec
 
