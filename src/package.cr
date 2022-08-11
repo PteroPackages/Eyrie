@@ -97,6 +97,11 @@ module Eyrie
       @postinstall = [] of String
     end
 
+    def self.from_file(path : String)
+      data = File.read path
+      from_yaml data
+    end
+
     def validate : Nil
       if @name =~ %r[[^a-z0-9_-]]
         raise "name can only contain lowercase letters, numbers, dashes, and underscores"

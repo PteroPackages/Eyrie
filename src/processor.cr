@@ -1,164 +1,204 @@
 require "semantic_compare"
 require "semantic_version"
-require "./package"
 
-module Eyrie::Processor
-  PANEL_PATH = Path["/var/www/pterodactyl"]
-  CACHE_PATH = Path["/var/eyrie/cache"]
+module Eyrie
+  class Processor
+    @version        : SemanticVersion
+    @panel_path     : String
+    @composer_deps  : Hash(String, String)
+    @npm_deps       : Hash(String, String)
 
-  def self.get_panel_version : String
-    config = PANEL_PATH / "config" / "app.php"
-    unless File.exists? config
-      Log.error { "panel 'app.php' config file not found" }
-      Log.fatal { "cannot install modules; terminating" }
-    end
-
-    info = File.read config
-    info =~ /'version' \=\> '(.*)'/
-    unless $1?
-      Log.error { "could not get panel version from config" }
-      Log.fatal { "cannot install modules; terminating" }
-    end
-
-    if $1 == "canary"
-      Log.error { "canary builds of the panel are not supported" }
-      Log.fatal { "please install an official version of the panel to use this application" }
-    end
-
-    $1
-  end
-
-  def self.run(mod : Module, version : String) : Bool
-    begin
-      mod.validate
-    rescue ex
-      Log.error(ex) { "failed validating module '#{mod.name}'" }
-      return false
-    end
-
-    if mod.authors.empty?
-      Log.warn { "no authors set for the package" }
-    else
-      mod.authors.each do |author|
-        Log.warn { "missing name for author" } if author.name.empty?
-        Log.warn { "missing contact for author" } if author.contact.empty?
+    def initialize(@panel_path)
+      unless Dir.exists? @panel_path
+        Log.fatal { "panel root location not found (path: #{@panel_path})" }
       end
+
+      config = File.join @panel_path, "config", "app.php"
+      unless File.exists? config
+        Log.error { "panel 'app.php' config file not found" }
+        Log.fatal { "this file is required for installing modules" }
+      end
+
+      info = File.read config
+      info =~ %r['version' => '(.*)']
+      unless $1?
+        Log.error { "could not get panel version from config" }
+        Log.fatal { "please ensure a valid panel version is set in your config" }
+      end
+
+      if $1 == "canary"
+        Log.error { "canary builds of the panel are not supported" }
+        Log.fatal { "please install an official version of the panel to use this application" }
+      end
+
+      @version = uninitialized SemanticVersion # type-safety
+      begin
+        @version = SemanticVersion.parse $1
+      rescue ex : ArgumentError
+        Log.fatal(ex) { "failed to parse panel version" }
+      end
+      Log.vinfo { "using panel version #{@version}" }
+
+      @composer_deps = {} of String => String
+      @npm_deps = {} of String => String
     end
 
-    valid : String? = nil
-    if mod.supports.any? { |v| v.match %r[[*~<>=^]+] }
-      parsed = SemanticVersion.try &.parse version
-      unless parsed
-        Log.error { "failed to parse panel version" }
+    def run(mod : Module) : Bool
+      Log.warn { "no authors set for the package" } if mod.authors.empty?
+
+      valid = false
+      if mod.supports.any? { |v| v.match %r[[*~<|>=^]+] }
+        mod.supports.each do |v|
+          if v.includes? '|'
+            valid = SemanticCompare.complex_expression @version, v
+          else
+            valid = SemanticCompare.simple_expression @version, v
+          end
+
+          break if valid
+        end
+      else
+        valid = valid.in? mod.supports
+      end
+
+      unless valid
+        Log.error { "panel version #{@version} is not supported by this module" }
+        Log.error { %(supported: #{mod.supports.join(" or ")}) }
         return false
       end
 
-      valid = mod.supports.find { |v| SemanticCompare.simple_expression parsed, v }
-    else
-      valid = mod.supports.find { |v| v == version }
+      return false unless resolve_files mod
+      resolve_dependencies mod.deps
+      exec_postinstall mod.postinstall
+
+      Log.info { "module '#{mod.name}' installed" }
+      true
     end
 
-    unless valid
-      Log.error { "this module does not support panel version #{$1}" }
-      return false
-    end
+    private def resolve_files(mod : Module) : Bool
+      Log.vinfo { "resolving module files" }
+      loc = File.join "/var/eyrie/cache", mod.name
 
-    resolve_files mod
-    install_deps mod.deps
-    exec_postinstall mod.postinstall
+      Dir.cd(loc) do
+        includes = Dir.glob mod.files.include
+        excludes = Dir.glob mod.files.exclude
+        includes.reject! { |f| f.in? excludes }
 
-    true
-  end
+        if includes.empty?
+          Log.error { "no included files were resolved" }
+          return false
+        end
 
-  private def self.resolve_files(mod : Module) : Nil
-    Log.vinfo { "resolving module files" }
-    loc = CACHE_PATH / mod.name
+        Log.info { "moving module files" }
+        includes.each do |file|
+          dest = File.join @panel_path, file
 
-    Dir.cd(loc) do
-      includes = Dir.glob mod.files.include
-      excludes = Dir.glob mod.files.exclude
-      includes.reject! { |f| f.in? excludes }
-      if includes.empty?
-        Log.error { "no included files were resolved" }
-        return false
-      end
+          Log.vinfo { "source: #{file}" }
+          Log.vinfo { "dest: #{dest}" }
 
-      Log.info { "moving included files" }
-
-      includes.each do |file|
-        dest = PANEL_PATH / file
-
-        Log.vinfo { "source: #{file}" }
-        Log.vinfo { "dest: #{dest}" }
-
-        if File.exists? dest
-          Log.vinfo { "destination exists; attempting overwrite" }
-          data = File.read file
           begin
-            File.write dest, data
+            File.rename file, dest
           rescue ex
-            Log.error(ex) { "failed overwriting destination path" }
-          end
-        else
-          begin
-            File.copy file, dest
-          rescue ex
-            Log.error(ex) { "failed to copy file to destination" }
+            Log.error(ex) { "failed moving file to destination" }
           end
         end
       end
+
+      true
     end
-  end
 
-  private def self.install_deps(deps : Deps) : Nil
-    install = deps.install
-    return unless install
+    private def resolve_dependencies(deps : Deps) : Nil
+      if install = deps.install
+        # install = parse_non_conflict install
 
-    unless install.composer.empty?
-      if ex = exec "composer --version"
-        Log.error(ex) { "cannot install php dependencies without composer" }
-      end
+        unless install.composer.empty?
+          if ex = exec "composer --version"
+            Log.error(ex) { "cannot install php dependencies without composer" }
+            return
+          end
 
-      install.composer.each do |name, version|
-        if ex = exec %(composer require "#{name}" #{version})
-          Log.error(ex) { "dependency '#{name}' failed to install" }
+          install.composer.each do |name, version|
+            name += ":" + version unless version.empty?
+            if ex = exec %(composer require "#{name}")
+              Log.error(ex) { "dependency '#{name}' failed to install" }
+            else
+              @composer_deps[name] = version
+            end
+          end
+        end
+
+        unless install.npm.empty?
+          if ex = exec "npm --version"
+            Log.error(ex) { "cannot install node dependencies without npm" }
+            return
+          end
+
+          install.npm.each do |name, version|
+            name += "@" + version unless version.empty?
+            if ex = exec "npm install #{name}"
+              Log.error(ex) { "dependency '#{name}' failed to install" }
+            else
+              @npm_deps[name] = version
+            end
+          end
         end
       end
+
+      # TODO: remove dependencies
     end
 
-    unless install.npm.empty?
-      if ex = exec "npm --version"
-        Log.error(ex) { "cannot install node dependencies without npm" }
-      end
+    # private def parse_non_conflict(spec : CmdDepSpec) : CmdDepSpec
+    #   res = CmdDepSpec.new
 
-      install.npm.each do |name, version|
-        name += "@#{version}" unless version.empty?
-        if ex = exec "npm install --no-fund #{name}"
-          Log.error(ex) { "dependency '#{name}' failed to install" }
+    #   spec.composer.each do |name, version|
+    #     if v = @composer_deps[name]?
+    #       Log.warn { "existing php dependency '#{name}' found" }
+
+    #       valid = SemanticCompare.try(&.simple_expression version) || false
+    #       unless valid
+    #         Log.warn { "dependency '#{name}:#{version}' conflicts with dependency '#{name}:#{v}'" }
+    #         Log.warn { "cannot use dependency '#{name}'" }
+    #         next
+    #       end
+    #     end
+
+    #     res.composer[name] = version
+    #   end
+
+    #   spec.npm.each do |name, version|
+    #     if v = @npm_deps[name]?
+    #       Log.warn { "existing node dependency '#{name}' found" }
+
+    #       valid = SemanticCompare.try(&.simple_expression version) || false
+    #       unless valid
+    #         Log.warn { "dependency '#{name}@#{version}' conflicts with dependency '#{name}:#{v}'" }
+    #         Log.warn { "cannot use dependency '#{name}'" }
+    #         next
+    #       end
+    #     end
+
+    #     res.composer[name] = version
+    #   end
+
+    #   res
+    # end
+
+    private def exec_postinstall(scripts : Array(String)) : Nil
+      return if scripts.empty?
+      Log.info { "running postinstall scripts" }
+
+      scripts.each_with_index do |script, i|
+        Log.vinfo { "#{i+1}: #{script}" }
+        if ex = exec script
+          Log.error(ex) { "script #{i+1} failed: #{ex.message}" }
         end
+        Log.vinfo { "script #{i+1} exited: #{$?.exit_code}" }
       end
     end
-  end
 
-  private def self.exec_postinstall(scripts : Array(String)) : Nil
-    if scripts.empty?
-      Log.info { "no postinstall scripts to execute" }
-      return
-    end
-
-    scripts.each_with_index do |script, i|
-      Log.vinfo { script }
-      if ex = exec script
-        Log.error(ex) { "script #{i+1} failed: #{ex.message}" }
-      end
-
-      Log.vinfo { "script #{i+1}: exited (#{$?.success?}" }
-    end
-  end
-
-  private def self.exec(command : String) : Exception?
-    begin
-      Process.exec command, shell: true
+    private def exec(command : String) : Exception?
+      Log.vinfo { command }
+      Process.exec command, shell: true, chdir: "/var/www/pterodactyl"
     rescue ex
       ex
     end
