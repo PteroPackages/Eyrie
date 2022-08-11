@@ -6,6 +6,8 @@ module Eyrie
       cache = File.join "/var/eyrie/cache", spec.name
       count = 0
 
+      spec.validate
+
       loop do
         Log.vinfo "cloning: #{spec.source.url}"
         if ex = exec "git clone -c core.askPass=true #{spec.source.url} #{cache}"

@@ -118,6 +118,8 @@ module Eyrie
       if @files.include.empty?
         raise "no files included, cannot assume files to install"
       end
+
+      @source.try &.validate
     end
 
     def to_spec : ModuleSpec

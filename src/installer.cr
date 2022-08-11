@@ -51,7 +51,7 @@ module Eyrie::Installer
     end
 
     Log.fatal "no modules could be resolved" if modules.empty?
-    Log.info "installing #{modules.size} modules"
+    Log.info "installing #{modules.size} module#{"s" if modules.size > 1}"
 
     done = [] of Module
     modules.each do |mod|
@@ -61,7 +61,7 @@ module Eyrie::Installer
     write_lockfile(done) if lock
 
     taken = Time.monotonic - start
-    Log.info "installed #{done.size} modules in #{taken.nanoseconds}ms"
+    Log.info "installed #{done.size} module#{"s" if done.size > 1} in #{taken.nanoseconds}ms"
   end
 
   private def self.install(spec : ModuleSpec) : Module?
