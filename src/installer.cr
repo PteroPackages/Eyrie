@@ -4,42 +4,42 @@ require "./resolvers/*"
 
 module Eyrie::Installer
   def self.run(specs : Array(ModuleSpec), lock : Bool) : Nil
-    Log.vinfo { "checking panel availability" }
+    Log.vinfo "checking panel availability"
     proc = Processor.new "/var/www/pterodactyl"
 
-    Log.vinfo { "checking cache availability" }
+    Log.vinfo "checking cache availability"
     unless Dir.exists? "/var/eyrie/cache"
-      Log.vwarn { "cache directory not found, attempting to create" }
+      Log.vwarn "cache directory not found, attempting to create"
       begin
         Dir.mkdir_p "/var/eyrie/cache"
       rescue ex
-        Log.fatal(ex) { "failed to create cache directory" }
+        Log.fatal ex, "failed to create cache directory"
       end
     end
 
     unless Dir.empty? "/var/eyrie/cache"
-      Log.vinfo { "cache directory not empty, attempting clean" }
+      Log.vinfo "cache directory not empty, attempting clean"
       begin
         Dir.delete "/var/eyrie/cache"
         Dir.mkdir_p "/var/eyrie/cache"
-      rescue
-        Log.warn { "failed to clean cache path" }
+      rescue ex
+        Log.warn ex, "failed to clean cache path"
       end
     end
 
-    Log.vinfo { "checking git availability" }
+    Log.vinfo "checking git availability"
     begin
       `git --version`
     rescue ex
-      Log.fatal(ex) { "git is required for this operation" }
+      Log.fatal ex, "git is required for this operation"
     end
 
     specs.each do |spec|
-      Log.vinfo { "validating module spec '#{spec.name}'" }
+      Log.vinfo "validating module spec '#{spec.name}'"
       spec.validate
     rescue ex
-      Log.error { "failed to validate module spec '#{spec.name}'" }
-      Log.fatal(ex) { }
+      Log.error "failed to validate module spec '#{spec.name}'"
+      Log.fatal ex
     end
 
     start = Time.monotonic
@@ -49,8 +49,9 @@ module Eyrie::Installer
         modules << mod
       end
     end
-    Log.fatal { "no modules could be resolved" } if modules.empty?
-    Log.info { "installing #{modules.size} modules" }
+
+    Log.fatal "no modules could be resolved" if modules.empty?
+    Log.info "installing #{modules.size} modules"
 
     done = [] of Module
     modules.each do |mod|
@@ -60,7 +61,7 @@ module Eyrie::Installer
     write_lockfile(done) if lock
 
     taken = Time.monotonic - start
-    Log.info { "installed #{done.size} modules in #{taken.nanoseconds}ms" }
+    Log.info "installed #{done.size} modules in #{taken.nanoseconds}ms"
   end
 
   private def self.install(spec : ModuleSpec) : Module?
@@ -74,7 +75,7 @@ module Eyrie::Installer
     unless spec.source.type.local?
       path = File.join "/var/eyrie/cache", spec.name, "eyrie.module.yml"
       unless File.exists? path
-        Log.error { "module file not found for '#{spec.name}'" }
+        Log.error "module file not found for '#{spec.name}'"
         return
       end
 
@@ -83,9 +84,9 @@ module Eyrie::Installer
       begin
         Module.from_path MOD_PATH
       rescue ex : YAML::ParseException
-        Log.error(ex) { "failed to parse module for '#{spec.name}'" }
+        Log.error ex, "failed to parse module for '#{spec.name}'"
       rescue ex
-        Log.error(ex) { }
+        Log.error ex
       end
     end
   end
@@ -96,6 +97,6 @@ module Eyrie::Installer
 
     File.write LOCK_PATH, spec.to_yaml
   rescue ex
-    Log.error(ex) { "failed to save lockfile" }
+    Log.error ex, "failed to save lockfile"
   end
 end

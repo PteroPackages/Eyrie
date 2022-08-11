@@ -40,26 +40,26 @@ module Eyrie
           Log.trace if opts.trace
           if opts.lock
             if File.exists?(LOCK_PATH) && !opts.force
-              Log.error { "lockfile already exists" }
+              Log.error "lockfile already exists"
             else
               begin
                 File.write LOCK_PATH, LockSpec.new.to_yaml
-                Log.info { "created lockfile at:\n#{LOCK_PATH}" }
+                Log.info "created lockfile at:\n#{LOCK_PATH}"
               rescue ex
-                Log.error(ex) { "failed to write to lockfile" }
+                Log.error ex, "failed to write to lockfile"
               end
             end
           end
 
           if File.exists? MOD_PATH
-            Log.fatal { "modules file already exists" } unless opts.force
+            Log.fatal "modules file already exists" unless opts.force
           end
 
           begin
             File.write MOD_PATH, Module.new.to_yaml
-            Log.info { "created modules file at:\n#{MOD_PATH}" }
+            Log.info "created modules file at:\n#{MOD_PATH}"
           rescue ex
-            Log.error(ex) { "failed to write to modules file" }
+            Log.error ex, "failed to write to modules file"
           end
         end
       end
@@ -92,24 +92,24 @@ module Eyrie
           Log.verbose if opts.verbose
 
           {% if flag?(:win32) %}
-            Log.fatal { "this command cannot be used on windows systems yet" }
+            Log.fatal "this command cannot be used on windows systems yet"
           {% end %}
 
           modules = [] of ModuleSpec
 
           if opts.source.empty?
-            spec = ::Eyrie.resolve_lockfile
+            spec = LockSpec.from_path LOCK_PATH
             modules += spec.modules
           else
             begin
               name = opts.source.split('/').pop.downcase.underscore
               modules << ModuleSpec.new(name, opts.version, opts.source, opts.type)
             rescue ex
-              Log.fatal(ex) { }
+              Log.fatal ex
             end
           end
 
-          Log.fatal { "no modules found to install" } if modules.empty?
+          Log.fatal "no modules found to install" if modules.empty?
           Installer.run modules, opts.no_lock
         end
       end
@@ -120,5 +120,6 @@ end
 begin
   Eyrie::Main.start ARGV
 rescue ex
-  Eyrie::Log.fatal(ex) { }
+  Eyrie::Log.trace
+  Eyrie::Log.fatal ex
 end

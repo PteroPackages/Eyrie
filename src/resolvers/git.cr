@@ -7,12 +7,12 @@ module Eyrie
       count = 0
 
       loop do
-        Log.vinfo { "cloning: #{spec.source.url}" }
+        Log.vinfo "cloning: #{spec.source.url}"
         if ex = exec "git clone -c core.askPass=true #{spec.source.url} #{cache}"
-          Log.error(ex) { "failed to clone repository" }
+          Log.error ex, "failed to clone repository"
           break if count == 0
           count += 1
-          Log.vinfo { "retrying (attempt #{count+1})" }
+          Log.vinfo "retrying (attempt #{count+1})"
         end
 
         return true
