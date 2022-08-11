@@ -82,7 +82,8 @@ module Eyrie
     property authors    : Array(Author)
     property source     : Source?
     property supports   : Array(String)
-    property deps       : Deps
+    @[YAML::Field(key: "dependencies")]
+    property deps       : Deps = Deps.new
     property files      : Files
     property postinstall : Array(String)
 
@@ -92,12 +93,11 @@ module Eyrie
       @authors = [Author.new("your-name-here", "your@contact.here")]
       @source = Source.new "url-to-source"
       @supports = [] of String
-      @deps = Deps.new
       @files = Files.new
       @postinstall = [] of String
     end
 
-    def self.from_file(path : String)
+    def self.from_path(path : String)
       data = File.read path
       from_yaml data
     end

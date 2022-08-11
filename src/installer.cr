@@ -78,10 +78,10 @@ module Eyrie::Installer
         return
       end
 
-      Module.from_file path
+      Module.from_path path
     else
       begin
-        Module.from_file MOD_PATH
+        Module.from_path MOD_PATH
       rescue ex : YAML::ParseException
         Log.error(ex) { "failed to parse module for '#{spec.name}'" }
       rescue ex
