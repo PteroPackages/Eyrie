@@ -98,16 +98,12 @@ module Eyrie
         end
 
         Log.info "moving module files"
-        includes.each do |file|
-          dest = File.join @panel_path, file
-
-          Log.vinfo ["source: #{file}", "dest:   #{dest}"]
-
-          begin
-            File.rename file, dest
-          rescue ex
-            Log.error ex, "failed moving file to destination"
-          end
+        begin
+          FileUtils.cp includes, @panel_path
+        rescue ex
+          Log.error "failed to move module files to destination"
+          Log.vinfo ["failed:"] + includes
+          return false
         end
       end
 

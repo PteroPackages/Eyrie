@@ -1,3 +1,4 @@
+require "file_utils"
 require "./package"
 require "./processor"
 require "./resolvers/*"
@@ -20,8 +21,7 @@ module Eyrie::Installer
     unless Dir.empty? "/var/eyrie/cache"
       Log.vinfo "cache directory not empty, attempting clean"
       begin
-        Dir.delete "/var/eyrie/cache"
-        Dir.mkdir_p "/var/eyrie/cache"
+        FileUtils.rm_rf "/var/eyrie/cache"
       rescue ex
         Log.warn ex, "failed to clean cache path"
       end
