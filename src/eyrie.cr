@@ -1,4 +1,5 @@
 require "clim"
+require "./initializer"
 require "./installer"
 require "./log"
 require "./package"
@@ -34,33 +35,14 @@ module Eyrie
         desc "Initializes a module file in the current directory"
         option "-f", "--force", type: Bool, desc: "force initialize the file", default: false
         option "--lock", type: Bool, desc: "create a lockfile with the module file", default: false
+        option "--skip", type: Bool, desc: "skip interactive setup", default: false
         ::set_default_opts
         run do |opts, _|
           Log.no_color if opts.no_color
           Log.trace if opts.trace
-          if opts.lock
-            if File.exists?(LOCK_PATH) && !opts.force
-              Log.error "lockfile already exists"
-            else
-              begin
-                File.write LOCK_PATH, LockSpec.new.to_yaml
-                Log.info "created lockfile at:\n#{LOCK_PATH}"
-              rescue ex
-                Log.error ex, "failed to write to lockfile"
-              end
-            end
-          end
 
-          if File.exists? MOD_PATH
-            Log.fatal "modules file already exists" unless opts.force
-          end
-
-          begin
-            File.write MOD_PATH, Module.new.to_yaml
-            Log.info "created modules file at:\n#{MOD_PATH}"
-          rescue ex
-            Log.error ex, "failed to write to modules file"
-          end
+          Initializer.init_lockfile(opts.force) if opts.lock
+          Initializer.init_module_file(opts.force, opts.skip, opts.lock)
         end
       end
 
