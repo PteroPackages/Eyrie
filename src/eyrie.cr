@@ -1,4 +1,5 @@
 require "clim"
+require "./info"
 require "./initializer"
 require "./installer"
 require "./log"
@@ -93,6 +94,20 @@ module Eyrie
 
           Log.fatal "no modules found to install" if modules.empty?
           Installer.run modules, opts.no_lock
+        end
+      end
+
+      sub "info" do
+        usage "info [name]"
+        desc "Gets information on a module or modules installed on the system"
+        argument "name", type: String, desc: "the name of the module"
+
+        ::set_default_opts
+        run do |opts, args|
+          Log.no_color if opts.no_color
+          Log.trace if opts.trace
+
+          Info.get_modules args.name
         end
       end
     end
