@@ -20,29 +20,32 @@ module Eyrie::Initializer
       return
     end
 
-    if skip
-      File.write MOD_PATH, Module.new.to_yaml
-      Log.info "created module file at:\n#{MOD_PATH}#{"\n" if newline}"
-      return
+    unless skip
+      if can_read_term?
+        return init_interactive_setup newline
+      else
+        Log.warn [
+          "stdin input is not supported by this terminal",
+          "skipping interactive module setup"
+        ]
+      end
     end
 
-    if !skip && can_read_term?
-      init_interactive_setup newline
-    else
-      begin
-        File.write MOD_PATH, Module.new.to_yaml
-        Log.info "created module file at:\n#{MOD_PATH}"
-      rescue ex
-        Log.error ex, "failed to write to module file"
-      end
+    begin
+      File.write MOD_PATH, Module.new.to_yaml
+      Log.info "created module file at:\n#{MOD_PATH}"
+    rescue ex
+      Log.error ex, "failed to write to module file"
     end
   end
 
   private def self.can_read_term? : Bool
-    true
+    !STDIN.closed?
   end
 
   private def self.init_interactive_setup(newline : Bool) : Nil
+    setup_trap
+
     Log.info [
       "#{"\n" if newline}Welcome to the Eyrie interactive module setup",
       "This setup will walk you through creating an eyrie module file",
@@ -82,6 +85,7 @@ module Eyrie::Initializer
       when .includes? "gitlab"  then source.type = :gitlab
       when .includes? "git"     then next # default is git
       else
+        Log.info "assuming source type is local (you can change this after)"
         source.type = :local
       end
     end
@@ -103,6 +107,17 @@ module Eyrie::Initializer
     rescue ex
       Log.error ex, "failed to write to module file"
     end
+  end
+
+  private def self.setup_trap : Nil
+    {% if flag?(:win32) %}
+      # not possible yet?
+    {% else %}
+      Signal::INT.trap do
+        Log.info "\n\nExiting module setup"
+        exit
+      end
+    {% end %}
   end
 
   private def self.prompt(message : String, *, can_skip : Bool = true,
