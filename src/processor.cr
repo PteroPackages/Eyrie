@@ -75,7 +75,7 @@ module Eyrie
       end
 
       valid = false
-      if supports.any? { |v| v.match %r[[*~<|>=^]+] }
+      if supports.any? &.match %r[[*~<|>=^]+]
         supports.each do |v|
           if v.includes? '|'
             valid = SemanticCompare.complex_expression @version, v
@@ -100,6 +100,7 @@ module Eyrie
       return false unless resolve_files mod
       resolve_dependencies mod.deps
       exec_postinstall mod.postinstall
+      save_module mod
 
       Log.info "module '#{mod.name}' installed"
       true
@@ -112,14 +113,14 @@ module Eyrie
       Dir.cd(loc) do
         includes = Dir.glob mod.files.include
         excludes = Dir.glob mod.files.exclude
-        includes.reject! { |f| f.in? excludes }
+        includes.reject! &.in? excludes
 
         if includes.empty?
           Log.error "no included files were resolved"
           return false
         end
 
-        Log.info "moving module files"
+        Log.vinfo "moving module files"
         begin
           FileUtils.cp includes, @panel_path
         rescue ex
@@ -143,7 +144,7 @@ module Eyrie
           end
 
           install.composer.each do |name, version|
-            name += ":" + version unless version.empty?
+            name += ":" + version unless version.empty? || version == "*"
             if ex = exec %(composer require "#{name}")
               Log.error ex, "dependency '#{name}' failed to install"
             else
@@ -159,7 +160,7 @@ module Eyrie
           end
 
           install.npm.each do |name, version|
-            name += "@" + version unless version.empty?
+            name += "@" + version unless version.empty? || version == "*"
             if ex = exec "npm install #{name}"
               Log.error ex, "dependency '#{name}' failed to install"
             else
@@ -172,42 +173,6 @@ module Eyrie
       # TODO: remove dependencies
     end
 
-    # private def parse_non_conflict(spec : CmdDepSpec) : CmdDepSpec
-    #   res = CmdDepSpec.new
-
-    #   spec.composer.each do |name, version|
-    #     if v = @composer_deps[name]?
-    #       Log.warn { "existing php dependency '#{name}' found" }
-
-    #       valid = SemanticCompare.try(&.simple_expression version) || false
-    #       unless valid
-    #         Log.warn { "dependency '#{name}:#{version}' conflicts with dependency '#{name}:#{v}'" }
-    #         Log.warn { "cannot use dependency '#{name}'" }
-    #         next
-    #       end
-    #     end
-
-    #     res.composer[name] = version
-    #   end
-
-    #   spec.npm.each do |name, version|
-    #     if v = @npm_deps[name]?
-    #       Log.warn { "existing node dependency '#{name}' found" }
-
-    #       valid = SemanticCompare.try(&.simple_expression version) || false
-    #       unless valid
-    #         Log.warn { "dependency '#{name}@#{version}' conflicts with dependency '#{name}:#{v}'" }
-    #         Log.warn { "cannot use dependency '#{name}'" }
-    #         next
-    #       end
-    #     end
-
-    #     res.composer[name] = version
-    #   end
-
-    #   res
-    # end
-
     private def exec_postinstall(scripts : Array(String)) : Nil
       return if scripts.empty?
       Log.info "running postinstall scripts"
@@ -218,6 +183,16 @@ module Eyrie
           Log.error ex, "script #{i+1} failed: #{ex.message}"
         end
         Log.vinfo "script #{i+1} exited: #{$?.exit_code}"
+      end
+    end
+
+    private def save_module(mod : Module) : Nil
+      path = File.join "/var/eyrie/save", mod.name + ".save.yml"
+
+      begin
+        File.write path, mod.to_yaml
+      rescue ex
+        Log.warn ex, "failed to save module '#{mod.name}'"
       end
     end
 

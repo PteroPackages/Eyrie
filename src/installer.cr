@@ -27,6 +27,16 @@ module Eyrie::Installer
       end
     end
 
+    Log.vinfo "checking save availability"
+    unless Dir.exists? "/var/eyrie/save"
+      Log.vwarn "save directory not found, attempting to create"
+      begin
+        Dir.mkdir_p "/var/eyrie/save"
+      rescue ex
+        Log.fatal ex, "failed to create save directory"
+      end
+    end
+
     Log.vinfo "checking git availability"
     begin
       `git --version`
