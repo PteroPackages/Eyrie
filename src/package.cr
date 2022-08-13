@@ -5,8 +5,8 @@ module Eyrie
   struct Author
     include YAML::Serializable
 
-    property name     : String
-    property contact  : String
+    property name : String
+    property contact : String
 
     def initialize(@name, @contact); end
   end
@@ -21,7 +21,7 @@ module Eyrie
   struct Source
     include YAML::Serializable
 
-    property url  : String
+    property url : String
     property type : SourceType
 
     def initialize(@url, @type = :git); end
@@ -41,7 +41,7 @@ module Eyrie
     include YAML::Serializable
 
     property composer : Hash(String, String)
-    property npm      : Hash(String, String)
+    property npm : Hash(String, String)
 
     def initialize
       @composer = {} of String => String
@@ -52,8 +52,8 @@ module Eyrie
   struct Deps
     include YAML::Serializable
 
-    property install  : CmdDepSpec?
-    property remove   : CmdDepSpec?
+    property install : CmdDepSpec?
+    property remove : CmdDepSpec?
 
     def initialize
       @install = CmdDepSpec.new
@@ -64,10 +64,10 @@ module Eyrie
   struct Files
     include YAML::Serializable
 
-    property include  : Array(String)
-    property exclude  : Array(String) = [] of String
+    property include : Array(String)
+    property exclude : Array(String) = [] of String
     property mappings : Hash(String, String) = {} of String => String
-    property remove   : Array(String) = [] of String
+    property remove : Array(String) = [] of String
 
     def initialize
       @include = [] of String
@@ -80,14 +80,14 @@ module Eyrie
   struct Module
     include YAML::Serializable
 
-    property name       : String
-    property version    : String
-    property authors    : Array(Author) = [] of Author
-    property source     : Source?
-    property supports   : String
+    property name : String
+    property version : String
+    property authors : Array(Author) = [] of Author
+    property source : Source?
+    property supports : String
     @[YAML::Field(key: "dependencies")]
-    property deps       : Deps = Deps.new
-    property files      : Files
+    property deps : Deps = Deps.new
+    property files : Files
     property postinstall : Array(String) = [] of String
 
     def initialize
@@ -135,9 +135,9 @@ module Eyrie
   struct ModuleSpec
     include YAML::Serializable
 
-    property name     : String
-    property version  : String
-    property source   : Source
+    property name : String
+    property version : String
+    property source : Source
 
     def initialize(@name, @version, @source); end
 

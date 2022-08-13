@@ -15,10 +15,10 @@ module Eyrie
       return GitResolver.run mod.to_spec unless src.type.local?
 
       path = if src.url.starts_with? '.'
-        File.expand_path File.join(Dir.current, src.url)
-      else
-        File.expand_path src.url
-      end
+               File.expand_path File.join(Dir.current, src.url)
+             else
+               File.expand_path src.url
+             end
 
       unless File.exists? path
         Log.error "source files for module '#{mod.name}' not found"

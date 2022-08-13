@@ -76,17 +76,17 @@ module Eyrie::Installer
 
   private def self.install(spec : ModuleSpec) : Module?
     res = if spec.source.type.local?
-      LocalResolver.run spec
-    else
-      GitResolver.run spec
-    end
+            LocalResolver.run spec
+          else
+            GitResolver.run spec
+          end
     return unless res
 
     path = if spec.source.type.local?
-      File.expand_path File.join(Dir.current, spec.source.url)
-    else
-      File.join "/var/eyrie/cache", spec.name, "eyrie.module.yml"
-    end
+             File.expand_path File.join(Dir.current, spec.source.url)
+           else
+             File.join "/var/eyrie/cache", spec.name, "eyrie.module.yml"
+           end
 
     begin
       Module.from_path path

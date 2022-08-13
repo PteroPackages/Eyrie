@@ -14,7 +14,7 @@ module Eyrie
           Log.error ex, "failed to clone repository"
           break if count == 0
           count += 1
-          Log.vinfo "retrying (attempt #{count+1})"
+          Log.vinfo "retrying (attempt #{count + 1})"
         end
 
         return true

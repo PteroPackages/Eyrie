@@ -16,10 +16,10 @@ macro set_default_options
 end
 
 module Eyrie
-  VERSION = "0.1.0"
+  VERSION      = "0.1.0"
   LOCK_VERSION = 1
-  MOD_PATH = File.join Dir.current, "eyrie.module.yml"
-  LOCK_PATH = File.join Dir.current, "eyrie.lock"
+  MOD_PATH     = File.join Dir.current, "eyrie.module.yml"
+  LOCK_PATH    = File.join Dir.current, "eyrie.lock"
 
   class Main < Clim
     main do

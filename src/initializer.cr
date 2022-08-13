@@ -80,9 +80,9 @@ module Eyrie::Initializer
       source.url = value
 
       case value
-      when .includes? "github"  then source.type = :github
-      when .includes? "gitlab"  then source.type = :gitlab
-      when .includes? "git"     then next # default is git
+      when .includes? "github" then source.type = :github
+      when .includes? "gitlab" then source.type = :gitlab
+      when .includes? "git"    then next # default is git
       else
         Log.info "assuming source type is local (you can change this after)"
         source.type = :local

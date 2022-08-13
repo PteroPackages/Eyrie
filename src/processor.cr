@@ -2,10 +2,10 @@ require "semantic_compare"
 
 module Eyrie
   class Processor
-    @version        : SemanticVersion
-    @panel_path     : String
-    @composer_deps  : Hash(String, String)
-    @npm_deps       : Hash(String, String)
+    @version : SemanticVersion
+    @panel_path : String
+    @composer_deps : Hash(String, String)
+    @npm_deps : Hash(String, String)
 
     def initialize(@panel_path)
       unless Dir.exists? @panel_path
@@ -161,11 +161,11 @@ module Eyrie
       Log.info "running postinstall scripts"
 
       scripts.each_with_index do |script, i|
-        Log.vinfo "#{i+1}: #{script}"
+        Log.vinfo "#{i + 1}: #{script}"
         if ex = exec script
-          Log.error ex, "script #{i+1} failed: #{ex.message}"
+          Log.error ex, "script #{i + 1} failed: #{ex.message}"
         end
-        Log.vinfo "script #{i+1} exited: #{$?.exit_code}"
+        Log.vinfo "script #{i + 1} exited: #{$?.exit_code}"
       end
     end
 
