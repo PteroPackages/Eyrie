@@ -65,13 +65,14 @@ module Eyrie
     include YAML::Serializable
 
     property include  : Array(String)
-    property exclude  : Array(String)
-    # property mappings : Hash(String, String)
-    property remove   : Array(String)
+    property exclude  : Array(String) = [] of String
+    property mappings : Hash(String, String) = {} of String => String
+    property remove   : Array(String) = [] of String
 
     def initialize
       @include = [] of String
       @exclude = [] of String
+      @mappings = {} of String => String
       @remove = [] of String
     end
   end
@@ -81,20 +82,20 @@ module Eyrie
 
     property name       : String
     property version    : String
-    property authors    : Array(Author)
+    property authors    : Array(Author) = [] of Author
     property source     : Source?
-    property supports   : Array(String)
+    property supports   : String
     @[YAML::Field(key: "dependencies")]
     property deps       : Deps = Deps.new
     property files      : Files
-    property postinstall : Array(String)
+    property postinstall : Array(String) = [] of String
 
     def initialize
       @name = "module-name"
       @version = "0.0.1"
       @authors = [Author.new("your-name-here", "your@contact.here")]
       @source = Source.new "url-to-source"
-      @supports = [] of String
+      @supports = ""
       @files = Files.new
       @postinstall = [] of String
     end
@@ -115,7 +116,9 @@ module Eyrie
         raise Exception.new "invalid version format '#{@version}'", cause: ex
       end
 
-      raise "no supported panel versions set" if @supports.empty?
+      unless @supports =~ %r[[*~<|>=^]*\d+\.\d+\.\d+[*~<|>=^]*]
+        raise "invalid supported version requirement"
+      end
 
       if @files.include.empty?
         raise "no files included, cannot assume files to install"

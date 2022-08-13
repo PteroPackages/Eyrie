@@ -52,7 +52,7 @@ module Eyrie::List
 
     source:     #{format_source(mod.source)}
 
-    supports:   #{mod.supports.join(", ")}
+    supports:   #{mod.supports}
 
     INFO
   end

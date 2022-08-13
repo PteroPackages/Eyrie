@@ -95,7 +95,7 @@ module Eyrie::Initializer
         raise "invalid version format, must follow semver spec"
       end
 
-      mod.supports << value
+      mod.supports = value
     end
 
     mod.authors << author

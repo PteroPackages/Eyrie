@@ -54,45 +54,29 @@ module Eyrie
 
       # TODO: attempt to fix invalid version formats (+.0)?
       # still warn about them
-      supports = [] of String
-      mod.supports.each do |v|
-        if v.match %r[[*~<|>=^]*\d\.\d(\.\d)?]
-          if $1?
-            supports << v
-            next
-          end
-        end
-
-        Log.warn [
-          "cannot accept version requirement '#{v}'",
-          "version requirements must be in the major.minor.patch format"
+      mod.supports =~ %r[[*~<|>=^]*\d+\.\d+(\.\d+)?[*~<|>=^]*]
+      unless $1?
+        Log.error [
+          "cannot accept supported version requirement '#{mod.supports}'",
+          "version requirements must be in the major.minor.match format"
         ]
-      end
-
-      if supports.empty?
-        Log.error "no supported versions were in the expected version format"
         return false
       end
 
       valid = false
-      if supports.any? &.match %r[[*~<|>=^]+]
-        supports.each do |v|
-          if v.includes? '|'
-            valid = SemanticCompare.complex_expression @version, v
-          else
-            valid = SemanticCompare.simple_expression @version, v
-          end
 
-          break if valid
+      if mod.supports =~ %r[[*~<|>=^]+]
+        if mod.supports.includes? '|'
+          valid = SemanticCompare.complex_expression @version, mod.supports
+        else
+          valid = SemanticCompare.simple_expression @version, mod.supports
         end
-      else
-        valid = valid.in? mod.supports
       end
 
       unless valid
         Log.error [
           "panel version #{@version} is not supported by this module",
-          %(supported: #{mod.supports.join(" or ")})
+          "supported requirement: #{mod.supports}"
         ]
         return false
       end
