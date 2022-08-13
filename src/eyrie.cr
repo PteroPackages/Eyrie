@@ -4,6 +4,7 @@ require "./initializer"
 require "./installer"
 require "./log"
 require "./package"
+require "./uninstaller"
 
 macro set_default_options
   option "--no-color", type: Bool, desc: "disable ansi color codes", default: false
@@ -48,6 +49,7 @@ module Eyrie
       end
 
       sub "install" do
+        alias_name "i", "add"
         usage "install [-s|--source <url>] [-L|--no-lock] [-v|--verbose] [...]"
         desc "Installs modules from a source or lockfile"
         option "-s <url>", "--source <ur>",
@@ -107,7 +109,7 @@ module Eyrie
           type: String, desc: "the name of a specific module to get info for", default: ""
 
         ::set_default_options
-        run do |opts, args|
+        run do |opts, _|
           Log.no_color if opts.no_color
           Log.trace if opts.trace
           Log.verbose if opts.verbose
@@ -117,6 +119,19 @@ module Eyrie
           else
             List.get_module_info opts.name
           end
+        end
+      end
+
+      sub "uninstall" do
+        usage "uninstall <name> [-v|--verbose] [...]"
+        argument "name", type: String
+        option "-v", "--verbose", type: Bool, default: false
+        ::set_default_options
+        run do |args, _|
+          mod = List.get_modules.find { |m| m.name == args.name }
+          next unless mod
+
+          Uninstaller.run mod
         end
       end
     end

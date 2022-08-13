@@ -23,7 +23,7 @@ module Eyrie::List
     puts get_modules.map { |m| m.name + ":" + m.version }.join('\n')
   end
 
-  private def self.get_modules : Array(Module)
+  def self.get_modules : Array(Module)
     if Dir.empty? "/var/eyrie/save"
       Log.fatal "no installed modules found in save directory"
     end
