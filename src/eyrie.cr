@@ -1,7 +1,7 @@
 require "clim"
-require "./list"
 require "./initializer"
 require "./installer"
+require "./list"
 require "./log"
 require "./package"
 require "./uninstaller"
@@ -49,7 +49,7 @@ module Eyrie
       end
 
       sub "install" do
-        alias_name "i", "add"
+        alias_name "add"
         usage "install [-s|--source <url>] [-L|--no-lock] [-v|--verbose] [...]"
         desc "Installs modules from a source or lockfile"
         option "-s <url>", "--source <ur>",
@@ -123,13 +123,27 @@ module Eyrie
       end
 
       sub "uninstall" do
+        alias_name "remove"
         usage "uninstall <name> [-v|--verbose] [...]"
-        argument "name", type: String
-        option "-v", "--verbose", type: Bool, default: false
+        desc "Uninstalls a specified module from the system"
+        argument "name",
+          type: String, desc: "the name of the module to uninstall", required: true
+
+        option "-v", "--verbose",
+          type: Bool, desc: "output verbose and debug logs", default: false
+
         ::set_default_options
-        run do |args, _|
+        run do |args, opts|
+          Log.no_color if opts.no_color
+          Log.trace if opts.trace
+          Log.verbose if opts.verbose
+
+          {% if flag?(:win32) %}
+            Log.fatal "this command cannot be used on windows systems yet"
+          {% end %}
+
           mod = List.get_modules.find { |m| m.name == args.name }
-          next unless mod
+          Log.fatal "module '#{name}' not found or is not installed" unless mod
 
           Uninstaller.run mod
         end
