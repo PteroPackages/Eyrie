@@ -1,11 +1,11 @@
 require "clim"
-require "./info"
+require "./list"
 require "./initializer"
 require "./installer"
 require "./log"
 require "./package"
 
-macro set_default_opts
+macro set_default_options
   option "--no-color", type: Bool, desc: "disable ansi color codes", default: false
   option "--trace", type: Bool, desc: "log error stack trace", default: false
 
@@ -26,18 +26,18 @@ module Eyrie
       desc "Pterodactyl Module Manager (addons and themes)"
       version "Eyrie #{::Eyrie::VERSION}"
       option "-v", "--version", type: Bool, desc: "shows the current version", default: false
-      ::set_default_opts
+      ::set_default_options
       run do |opts, _|
         puts opts.help_string
       end
 
       sub "init" do
-        usage "init [-f|--force]"
+        usage "init [-f|--force] [...]"
         desc "Initializes a module file in the current directory"
         option "-f", "--force", type: Bool, desc: "force initialize the file", default: false
         option "--lock", type: Bool, desc: "create a lockfile with the module file", default: false
         option "--skip", type: Bool, desc: "skip interactive setup", default: false
-        ::set_default_opts
+        ::set_default_options
         run do |opts, _|
           Log.no_color if opts.no_color
           Log.trace if opts.trace
@@ -48,7 +48,7 @@ module Eyrie
       end
 
       sub "install" do
-        usage "install [-s|--source <url>] [-L|--no-lock] [-v|--verbose]"
+        usage "install [-s|--source <url>] [-L|--no-lock] [-v|--verbose] [...]"
         desc "Installs modules from a source or lockfile"
         option "-s <url>", "--source <ur>",
           type: String, desc: "the url to the module source", default: ""
@@ -68,7 +68,7 @@ module Eyrie
         option "-L", "--no-lock",
           type: Bool, desc: "don't save the module in the lockfile", default: false
 
-        ::set_default_opts
+        ::set_default_options
         run do |opts, _|
           Log.no_color if opts.no_color
           Log.trace if opts.trace
@@ -97,26 +97,25 @@ module Eyrie
         end
       end
 
-      sub "info" do
-        usage "info [name] [-v|--verbose] [-l|--list] [...]"
-        desc "Gets information on a module or modules installed on the system"
-        argument "name", type: String, desc: "the name of the module"
+      sub "list" do
+        usage "info [-n|--name <name>] [-v|--verbose] [...]"
+        desc "Lists all installed modules and gets info on a specified module"
         option "-v", "--verbose",
           type: Bool, desc: "output verbose and debug logs", default: false
 
-        option "-l", "--list",
-          type: Bool, desc: "list all installed modules", default: true
+        option "-n <name>", "--name <name>",
+          type: String, desc: "the name of a specific module to get info for", default: ""
 
-        ::set_default_opts
+        ::set_default_options
         run do |opts, args|
           Log.no_color if opts.no_color
           Log.trace if opts.trace
           Log.verbose if opts.verbose
 
-          if opts.list
-            Info.list_modules
+          if opts.name.empty?
+            List.list_modules
           else
-            Info.get_module_info args.name
+            List.get_module_info opts.name
           end
         end
       end

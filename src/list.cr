@@ -1,7 +1,7 @@
 require "uri"
 
-module Eyrie::Info
-  def self.get_module_info(name : String?) : Nil
+module Eyrie::List
+  def self.get_module_info(name : String) : Nil
     save = "/var/eyrie/save"
     unless Dir.exists? save
       Log.vwarn "save directory not found, attempting to create"
@@ -13,16 +13,10 @@ module Eyrie::Info
       end
     end
 
-    mods = get_modules
+    mod = get_modules.find { |m| m.name == name }
+    Log.fatal "module '#{name}' not found or is not installed" unless mod
 
-    if n = name
-      mod = mods.find { |m| m.name == n }
-      Log.fatal "module '#{n}' not found or is not installed" unless mod
-
-      format_module mod
-    else
-      mods.each { |m| format_module m; puts }
-    end
+    format_module mod
   end
 
   def self.list_modules : Nil
