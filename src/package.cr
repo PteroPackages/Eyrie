@@ -106,7 +106,7 @@ module Eyrie
     end
 
     def validate : Nil
-      if @name =~ %r[[^a-z0-9_-]]
+      if @name.matches? /[^a-z0-9_-]/
         raise "name can only contain lowercase letters, numbers, dashes, and underscores"
       end
 
@@ -116,7 +116,7 @@ module Eyrie
         raise Exception.new "invalid version format '#{@version}'", cause: ex
       end
 
-      unless @supports =~ %r[[*~<|>=^]*\d+\.\d+\.\d+[*~<|>=^]*]
+      unless @supports.matches? /[*~<|>=^]*\d+\.\d+\.\d+[*~<|>=^]*/
         raise "invalid supported version requirement"
       end
 
@@ -157,7 +157,7 @@ module Eyrie
     end
 
     def validate : Nil
-      if @name =~ %r[[^a-z0-9_-]]
+      if @name.matches? /[^a-z0-9_-]/
         raise "name can only contain lowercase letters, numbers, dashes, and underscores"
       end
 

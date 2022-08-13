@@ -1,0 +1,5 @@
+Metrics/CyclomaticComplexity:
+  Enabled: false
+
+Layout/TrailingWhitespace:
+  Enabled: false

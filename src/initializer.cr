@@ -90,7 +90,7 @@ module Eyrie::Initializer
     end
 
     prompt("supports: ", can_skip: false) do |value|
-      unless value =~ %r[[*~<|>=^]*\d+\.\d+\.\d+[*~<|>=^]*]
+      unless value.matches? /[*~<|>=^]*\d+\.\d+\.\d+[*~<|>=^]*/
         raise "invalid version format, must follow semver spec"
       end
 

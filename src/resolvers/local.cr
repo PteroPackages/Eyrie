@@ -20,7 +20,10 @@ module Eyrie
         File.expand_path src.url
       end
 
-      Log.fatal "source files for module '#{mod.name}' not found" unless File.exists? path
+      unless File.exists? path
+        Log.error "source files for module '#{mod.name}' not found"
+        return false
+      end
 
       cache = File.join "/var/eyrie/cache", mod.name
       begin

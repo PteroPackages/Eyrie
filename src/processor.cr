@@ -21,7 +21,7 @@ module Eyrie
       end
 
       info = File.read config
-      info =~ %r['version' => '(.*)']
+      info =~ /'version' => '(.*)'/
       unless $1?
         Log.fatal [
           "could not get panel version from config",
@@ -53,7 +53,7 @@ module Eyrie
 
       # TODO: attempt to fix invalid version formats (+.0)?
       # still warn about them
-      mod.supports =~ %r[[*~<|>=^]*\d+\.\d+(\.\d+)?[*~<|>=^]*]
+      mod.supports =~ /[*~<|>=^]*\d+\.\d+(\.\d+)?[*~<|>=^]*/
       unless $1?
         Log.error [
           "cannot accept supported version requirement '#{mod.supports}'",
@@ -64,7 +64,7 @@ module Eyrie
 
       valid = false
 
-      if mod.supports =~ %r[[*~<|>=^]+]
+      if mod.supports.matches? /[*~<|>=^]+/
         if mod.supports.includes? '|'
           valid = SemanticCompare.complex_expression @version, mod.supports
         else
