@@ -1,5 +1,4 @@
 require "semantic_version"
-require "./package"
 
 module Eyrie::Initializer
   def self.init_lockfile(force : Bool) : Nil

@@ -1,5 +1,4 @@
 require "semantic_compare"
-require "semantic_version"
 
 module Eyrie
   class Processor

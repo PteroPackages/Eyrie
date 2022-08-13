@@ -1,5 +1,3 @@
-require "../package"
-
 module Eyrie
   abstract class Resolver
     def self.exec(command : String) : Exception?

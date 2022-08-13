@@ -1,5 +1,4 @@
 require "file_utils"
-require "./package"
 require "./processor"
 require "./resolvers/*"
 
