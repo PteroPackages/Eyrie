@@ -98,16 +98,26 @@ module Eyrie
       end
 
       sub "info" do
-        usage "info [name]"
+        usage "info [name] [-v|--verbose] [-l|--list] [...]"
         desc "Gets information on a module or modules installed on the system"
         argument "name", type: String, desc: "the name of the module"
+        option "-v", "--verbose",
+          type: Bool, desc: "output verbose and debug logs", default: false
+
+        option "-l", "--list",
+          type: Bool, desc: "list all installed modules", default: true
 
         ::set_default_opts
         run do |opts, args|
           Log.no_color if opts.no_color
           Log.trace if opts.trace
+          Log.verbose if opts.verbose
 
-          Info.get_modules args.name
+          if opts.list
+            Info.list_modules
+          else
+            Info.get_module_info args.name
+          end
         end
       end
     end
