@@ -83,22 +83,18 @@ module Eyrie::Installer
     end
     return unless res
 
-    unless spec.source.type.local?
-      path = File.join "/var/eyrie/cache", spec.name, "eyrie.module.yml"
-      unless File.exists? path
-        Log.error "module file not found for '#{spec.name}'"
-        return
-      end
-
-      Module.from_path path
+    path = if spec.source.type.local?
+      File.expand_path File.join(Dir.current, spec.source.url)
     else
-      begin
-        Module.from_path MOD_PATH
-      rescue ex : YAML::ParseException
-        Log.error ex, "failed to parse module for '#{spec.name}'"
-      rescue ex
-        Log.error ex
-      end
+      File.join "/var/eyrie/cache", spec.name, "eyrie.module.yml"
+    end
+
+    begin
+      Module.from_path path
+    rescue ex : YAML::ParseException
+      Log.error ex, "failed to parse module for '#{spec.name}'"
+    rescue ex
+      Log.error ex
     end
   end
 
