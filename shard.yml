@@ -8,9 +8,8 @@ authors:
   - Devonte W <https://github.com/devnote-dev>
 
 dependencies:
-  clim:
-    github: at-grandpa/clim
-    version: 0.17.1
+  cli:
+    github: devnote-dev/cli.cr
 
   semantic_compare:
     github: j8r/semantic_compare

@@ -1,18 +1,13 @@
-require "clim"
-require "./initializer"
-require "./installer"
-require "./list"
+require "cli"
+require "semantic_version"
+require "./commands/*"
 require "./log"
 require "./package"
-require "./uninstaller"
 
-macro set_default_options
-  option "--no-color", type: Bool, desc: "disable ansi color codes", default: false
-  option "--trace", type: Bool, desc: "log error stack trace", default: false
-
-  macro help_macro
-    option "-h", "--help", type: Bool, desc: "sends this help message", default: false
-  end
+macro set_global_options
+  add_option "no-color", desc: "disable ansi color codes"
+  add_option "trace", desc: "log error stack traces"
+  add_option "help", short: "h", desc: "get help information"
 end
 
 module Eyrie
@@ -21,139 +16,22 @@ module Eyrie
   MOD_PATH     = File.join Dir.current, "eyrie.module.yml"
   LOCK_PATH    = File.join Dir.current, "eyrie.lock"
 
-  class Main < Clim
-    main do
-      usage "eyrie [options] <command>"
-      desc "Pterodactyl Module Manager (addons and themes)"
-      version "Eyrie #{::Eyrie::VERSION}"
-      option "-v", "--version", type: Bool, desc: "shows the current version", default: false
-      ::set_default_options
-      run do |opts, _|
-        puts opts.help_string
-      end
+  def self.run : Nil
+    app = CLI::Application.new
+    app.help_template = Commands::RootCommand.help_template
 
-      sub "init" do
-        usage "init [-f|--force] [...]"
-        desc "Initializes a module file in the current directory"
-        option "-f", "--force", type: Bool, desc: "force initialize the file", default: false
-        option "--lock", type: Bool, desc: "create a lockfile with the module file", default: false
-        option "--skip", type: Bool, desc: "skip interactive setup", default: false
-        ::set_default_options
-        run do |opts, _|
-          Log.no_color if opts.no_color
-          Log.trace if opts.trace
+    app.add_command Commands::RootCommand, default: true
+    app.add_command Commands::InitCommand
+    app.add_command Commands::InstallCommand
+    app.add_command Commands::ListCommand
+    app.add_command Commands::UninstallCommand
 
-          Initializer.init_lockfile(opts.force) if opts.lock
-          Initializer.init_module_file(opts.force, opts.skip, opts.lock)
-        end
-      end
-
-      sub "install" do
-        alias_name "add"
-        usage "install [-s|--source <url>] [-L|--no-lock] [-v|--verbose] [...]"
-        desc "Installs modules from a source or lockfile"
-        option "-s <url>", "--source <ur>",
-          type: String, desc: "the url to the module source", default: ""
-
-        option "-t <type>", "--type <type>",
-          type: String, desc: "the type of source to install from", default: "git"
-
-        option "-v", "--verbose",
-          type: Bool, desc: "output verbose and debug logs", default: false
-
-        option "--trace",
-          type: Bool, desc: "log error stack traces if present", default: false
-
-        option "--version <v>",
-          type: String, desc: "a specific version to install", default: "*"
-
-        option "-L", "--no-lock",
-          type: Bool, desc: "don't save the module in the lockfile", default: false
-
-        ::set_default_options
-        run do |opts, _|
-          Log.no_color if opts.no_color
-          Log.trace if opts.trace
-          Log.verbose if opts.verbose
-
-          {% if flag?(:win32) %}
-            Log.fatal "this command cannot be used on windows systems yet"
-          {% end %}
-
-          modules = [] of ModuleSpec
-
-          if opts.source.empty?
-            spec = LockSpec.from_path LOCK_PATH
-            modules += spec.modules
-          else
-            begin
-              name = opts.source.split('/').pop.downcase.underscore
-              modules << ModuleSpec.new(name, opts.version, opts.source, opts.type)
-            rescue ex
-              Log.fatal ex
-            end
-          end
-
-          Log.fatal "no modules found to install" if modules.empty?
-          Installer.run modules, opts.no_lock
-        end
-      end
-
-      sub "list" do
-        usage "info [-n|--name <name>] [-v|--verbose] [...]"
-        desc "Lists all installed modules and gets info on a specified module"
-        option "-v", "--verbose",
-          type: Bool, desc: "output verbose and debug logs", default: false
-
-        option "-n <name>", "--name <name>",
-          type: String, desc: "the name of a specific module to get info for", default: ""
-
-        ::set_default_options
-        run do |opts, _|
-          Log.no_color if opts.no_color
-          Log.trace if opts.trace
-          Log.verbose if opts.verbose
-
-          if opts.name.empty?
-            List.list_modules
-          else
-            List.get_module_info opts.name
-          end
-        end
-      end
-
-      sub "uninstall" do
-        alias_name "remove"
-        usage "uninstall <name> [-v|--verbose] [...]"
-        desc "Uninstalls a specified module from the system"
-        argument "name",
-          type: String, desc: "the name of the module to uninstall", required: true
-
-        option "-v", "--verbose",
-          type: Bool, desc: "output verbose and debug logs", default: false
-
-        ::set_default_options
-        run do |args, opts|
-          Log.no_color if opts.no_color
-          Log.trace if opts.trace
-          Log.verbose if opts.verbose
-
-          {% if flag?(:win32) %}
-            Log.fatal "this command cannot be used on windows systems yet"
-          {% end %}
-
-          mod = List.get_modules.find { |m| m.name == args.name }
-          Log.fatal "module '#{name}' not found or is not installed" unless mod
-
-          Uninstaller.run mod
-        end
-      end
-    end
+    app.run ARGV
   end
 end
 
 begin
-  Eyrie::Main.start ARGV
+  Eyrie.run
 rescue ex
   Eyrie::Log.trace
   Eyrie::Log.fatal ex
