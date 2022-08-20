@@ -58,6 +58,12 @@ module Eyrie::Log
     warn args if @@verbose
   end
 
+  def self.vwarn(ex : Exception)
+    return unless @@verbose && @@warn
+    warn ex.message || "an unknown error occured"
+    ex.backtrace.each { |t| warn t } if @@trace
+  end
+
   def self.error(args : String)
     STDERR.puts "error".colorize(:red).to_s + ": #{args}"
   end
