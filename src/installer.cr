@@ -20,7 +20,7 @@ module Eyrie::Installer
     unless Dir.empty? "/var/eyrie/cache"
       Log.vinfo "cache directory not empty, attempting clean"
       begin
-        FileUtils.rm_rf "/var/eyrie/cache"
+        FileUtils.rm_rf "/var/eyrie/cache/"
       rescue ex
         Log.warn ex, "failed to clean cache path"
       end
@@ -43,6 +43,7 @@ module Eyrie::Installer
       Log.fatal ex, "git is required for this operation"
     end
 
+    start = Time.monotonic
     specs.each do |spec|
       Log.vinfo "validating module spec '#{spec.name}'"
       spec.validate
@@ -51,7 +52,6 @@ module Eyrie::Installer
       Log.fatal ex
     end
 
-    start = Time.monotonic
     modules = [] of Module
     specs.each do |spec|
       if mod = install spec
@@ -64,7 +64,12 @@ module Eyrie::Installer
 
     done = [] of Module
     modules.each do |mod|
-      done << mod if proc.run mod
+      if proc.run mod
+        if spec = specs.find { |s| s.name == mod.name }
+          mod.source = spec.source if spec.source.type.local?
+        end
+        done << mod
+      end
     end
 
     Log.fatal "no modules were installed" if done.empty?

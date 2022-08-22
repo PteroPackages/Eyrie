@@ -101,6 +101,7 @@ module Eyrie
     end
 
     def self.from_path(path : String)
+      raise "module file does not exist: #{path}" unless File.exists? path
       data = File.read path
       from_yaml data
     end
@@ -186,6 +187,7 @@ module Eyrie
     end
 
     def self.from_path(path : String)
+      raise "lockfile path does not exist: #{path}" unless File.exists? path
       data = File.read path
       from_yaml data
     end
