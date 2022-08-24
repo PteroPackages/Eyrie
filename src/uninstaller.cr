@@ -1,5 +1,3 @@
-require "file_utils"
-
 module Eyrie::Uninstaller
   def self.run(mod : Module) : Nil
     Log.warn [

@@ -12,6 +12,7 @@ module Eyrie::Commands
               install     installs modules from sources
               list        lists all installed modules
               uninstall   uninstalls a module
+              upgrade     upgrades installed modules
 
       Global Options:
               --no-color      disable ansi color codes

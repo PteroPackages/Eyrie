@@ -1,5 +1,3 @@
-require "../upgrader"
-
 module Eyrie::Commands
   class UpgradeCommand < CLI::Command
     def setup : Nil

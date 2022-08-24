@@ -1,7 +1,3 @@
-require "colorize"
-
-Colorize.on_tty_only!
-
 module Eyrie::Log
   @@trace = false
   @@verbose = false

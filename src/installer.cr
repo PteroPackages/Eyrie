@@ -1,5 +1,4 @@
 require "file_utils"
-require "./processor"
 require "./resolvers/*"
 
 module Eyrie::Installer

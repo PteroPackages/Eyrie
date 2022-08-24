@@ -1,5 +1,3 @@
-require "../initializer"
-
 module Eyrie::Commands
   class InitCommand < CLI::Command
     def setup : Nil

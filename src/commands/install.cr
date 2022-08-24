@@ -1,5 +1,3 @@
-require "../installer"
-
 module Eyrie::Commands
   class InstallCommand < CLI::Command
     def setup : Nil

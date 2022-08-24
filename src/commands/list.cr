@@ -1,5 +1,3 @@
-require "../list"
-
 module Eyrie::Commands
   class ListCommand < CLI::Command
     def setup : Nil

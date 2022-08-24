@@ -1,5 +1,3 @@
-require "../uninstaller"
-
 module Eyrie::Commands
   class UninstallCommand < CLI::Command
     def setup : Nil

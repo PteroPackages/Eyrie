@@ -1,5 +1,3 @@
-require "semantic_compare"
-
 module Eyrie
   class Processor
     @version : SemanticVersion

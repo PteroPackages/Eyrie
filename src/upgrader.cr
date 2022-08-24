@@ -1,6 +1,3 @@
-require "file_utils"
-require "semantic_compare"
-
 module Eyrie
   class Upgrader
     def self.run(specs : Array(ModuleSpec), no_lock : Bool) : Nil

@@ -1,8 +1,17 @@
 require "cli"
+require "colorize"
+require "file_utils"
+require "semantic_compare"
 require "semantic_version"
-require "./commands/*"
+
+require "./initializer"
+require "./installer"
+require "./list"
 require "./log"
 require "./package"
+require "./processor"
+require "./uninstaller"
+require "./upgrader"
 require "./util"
 
 macro set_global_options
@@ -10,6 +19,8 @@ macro set_global_options
   add_option "trace", desc: "log error stack traces"
   add_option "help", short: "h", desc: "get help information"
 end
+
+Colorize.on_tty_only!
 
 module Eyrie
   VERSION      = "0.1.0"
