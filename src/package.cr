@@ -1,4 +1,3 @@
-require "semantic_version"
 require "yaml"
 
 module Eyrie

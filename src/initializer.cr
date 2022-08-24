@@ -1,5 +1,3 @@
-require "semantic_version"
-
 module Eyrie::Initializer
   def self.init_lockfile(force : Bool) : Nil
     if File.exists?(LOCK_PATH) && !force
