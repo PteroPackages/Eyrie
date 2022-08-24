@@ -3,6 +3,7 @@ require "semantic_version"
 require "./commands/*"
 require "./log"
 require "./package"
+require "./util"
 
 macro set_global_options
   add_option "no-color", desc: "disable ansi color codes"
@@ -25,6 +26,7 @@ module Eyrie
     app.add_command Commands::InstallCommand
     app.add_command Commands::ListCommand
     app.add_command Commands::UninstallCommand
+    app.add_command Commands::UpgradeCommand
 
     app.run ARGV
   end
