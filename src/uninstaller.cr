@@ -8,14 +8,14 @@ module Eyrie::Uninstaller
       "or run the panel upgrade command after this"
     ]
 
-    Log.vinfo "validating module"
-    begin
-      mod.validate
-    rescue ex
-      Log.fatal ex, "failed to validate module '#{mod.name}'"
-    end
-
     taken = Time.measure do
+      Log.vinfo "validating module"
+      begin
+        mod.validate
+      rescue ex
+        Log.fatal ex, "failed to validate module '#{mod.name}'"
+      end
+
       remove_files mod.files
       cleanup_cache mod.name
     end
@@ -44,9 +44,9 @@ module Eyrie::Uninstaller
   end
 
   private def self.cleanup_cache(name : String) : Nil
-    path = File.join "/var/eyrie/cache", name + ".save.yml"
+    path = File.join "/var/eyrie/save", name + ".save.yml"
 
-    unless File.exists? path
+    if File.exists? path
       Log.vinfo "removing module save file"
       begin
         File.delete path
