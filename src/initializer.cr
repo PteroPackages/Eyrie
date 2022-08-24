@@ -37,7 +37,7 @@ module Eyrie::Initializer
   end
 
   private def self.can_read_term? : Bool
-    !STDIN.closed?
+    STDIN.tty? && !STDIN.closed?
   end
 
   private def self.init_interactive_setup(newline : Bool) : Nil

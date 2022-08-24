@@ -4,6 +4,7 @@ require "file_utils"
 require "semantic_compare"
 require "semantic_version"
 
+require "./commands/*"
 require "./initializer"
 require "./installer"
 require "./list"
