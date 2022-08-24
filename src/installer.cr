@@ -57,7 +57,11 @@ module Eyrie::Installer
            end
 
     begin
-      Module.from_path path
+      mod = Module.from_path path
+      unless mod.name == spec.name
+        raise "mismatched module names: expected '#{spec.name}'; got '#{mod.name}'"
+      end
+      mod
     rescue ex : YAML::ParseException
       Log.error ex, "failed to parse module for '#{spec.name}'"
     rescue ex
