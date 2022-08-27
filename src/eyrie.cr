@@ -15,13 +15,13 @@ require "./uninstaller"
 require "./upgrader"
 require "./util"
 
+Colorize.on_tty_only!
+
 macro set_global_options
   add_option "no-color", desc: "disable ansi color codes"
   add_option "trace", desc: "log error stack traces"
   add_option "help", short: "h", desc: "get help information"
 end
-
-Colorize.on_tty_only!
 
 module Eyrie
   VERSION      = "0.1.0"
@@ -34,6 +34,7 @@ module Eyrie
     app.help_template = Commands::RootCommand.help_template
 
     app.add_command Commands::RootCommand, default: true
+    app.add_command Commands::SetupCommand
     app.add_command Commands::InitCommand
     app.add_command Commands::InstallCommand
     app.add_command Commands::ListCommand

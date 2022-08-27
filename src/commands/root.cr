@@ -11,6 +11,7 @@ module Eyrie::Commands
               init        initializes a module or lock file
               install     installs modules from sources
               list        lists all installed modules
+              setup       setup eyrie configurations
               uninstall   uninstalls a module
               upgrade     upgrades installed modules
 
