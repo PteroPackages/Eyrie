@@ -16,8 +16,9 @@ module Eyrie::Util
       Log.vinfo "cache directory not empty, attempting clean"
       begin
         self.rm_rf "/var/eyrie/cache/*"
+        raise "cache directory is not empty" unless Dir.empty? "/var/eyrie/cache"
       rescue ex
-        Log.warn ex, "failed to clean cache path"
+        Log.warn ex, "failed to clean cache directory"
       end
     end
 
@@ -39,13 +40,23 @@ module Eyrie::Util
     end
   end
 
-  def self.rm_rf(path : String) : Nil
-    if path.includes? '*'
-      Dir.glob(path) do |file|
-        File.try &.delete(file)
+  private def self.rm_r(path : String) : Nil
+    if Dir.exists?(path) && !File.symlink?(path)
+      Dir.each_child(path) do |entry|
+        src = File.join path, entry
+        rm_r src
       end
+      Dir.delete path
     else
       File.delete path
+    end
+  end
+
+  def self.rm_rf(path : String) : Nil
+    if path.includes? '*'
+      Dir.glob(path) { |p| rm_r p }
+    else
+      rm_r path
     end
   rescue
   end
