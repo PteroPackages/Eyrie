@@ -15,7 +15,7 @@ module Eyrie::Util
     unless Dir.empty? "/var/eyrie/cache"
       Log.vinfo "cache directory not empty, attempting clean"
       begin
-        FileUtils.rm_rf "/var/eyrie/cache/"
+        self.rm_rf "/var/eyrie/cache/*"
       rescue ex
         Log.warn ex, "failed to clean cache path"
       end
@@ -37,5 +37,16 @@ module Eyrie::Util
     rescue ex
       Log.fatal ex, "git is required for this operation"
     end
+  end
+
+  def self.rm_rf(path : String) : Nil
+    if path.includes? '*'
+      Dir.glob(path) do |file|
+        File.try &.delete(file)
+      end
+    else
+      File.delete path
+    end
+  rescue
   end
 end

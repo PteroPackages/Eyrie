@@ -58,7 +58,7 @@ module Eyrie::Uninstaller
 
     unless Dir.empty? "/var/eyrie/cache"
       begin
-        FileUtils.rm_rf "/var/eyrie/cache/"
+        Util.rm_rf "/var/eyrie/cache/*"
       rescue ex
         Log.warn ex, "failed to clean cache directory"
       end

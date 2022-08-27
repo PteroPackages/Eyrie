@@ -50,7 +50,7 @@ module Eyrie::Commands
         unless nocheck && Dir.empty? "/var/eyrie/cache"
           STDOUT << "clearing cache directory: "
           begin
-            FileUtils.rm_rf "/var/eyrie/cache/"
+            Util.rm_rf "/var/eyrie/cache/*"
             Log.info "✅"
           rescue ex
             Log.info "❌"
@@ -89,7 +89,7 @@ module Eyrie::Commands
           else
             STDOUT << "clearing cache directory: "
             begin
-              FileUtils.rm_rf "/var/eyrie/cache/"
+              Util.rm_rf "/var/eyrie/cache/*"
               Log.info "✅"
             rescue ex
               Log.info "❌"
