@@ -23,8 +23,8 @@ module Eyrie::Uninstaller
 
   private def self.remove_files(files : Files) : Nil
     Dir.cd("/var/www/pterodactyl") do
-      includes = Dir.glob files.include
-      excludes = Dir.glob files.exclude
+      includes = Dir.glob files.includes
+      excludes = Dir.glob files.excludes
       includes.reject! &.in? excludes
 
       return Log.error "no module files found to remove" if includes.empty?

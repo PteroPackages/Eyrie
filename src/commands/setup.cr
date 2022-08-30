@@ -3,7 +3,7 @@ module Eyrie::Commands
     def setup : Nil
       @name = "setup"
       @description = "Setup and checks Eyrie configurations and directories"
-      @usage << "setup [-c|--check] [-v|--verbose] [options]"
+      @usage << "setup [-c|--check-only] [-v|--verbose] [options]"
 
       add_option "check-only", short: "c", desc: "only perform checks"
       add_option "verbose", short: "v", desc: "output debug and verbose logs"

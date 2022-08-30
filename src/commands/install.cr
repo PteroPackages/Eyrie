@@ -28,7 +28,7 @@ module Eyrie::Commands
       if source
         begin
           name = source.split('/').pop.downcase.underscore
-          modules << ModuleSpec.new(name, "*", source, options.get("type"))
+          modules << ModuleSpec.new(name, "*", source, options.get!("type"))
         rescue ex
           Log.fatal ex
         end

@@ -92,8 +92,8 @@ module Eyrie
       loc = File.join "/var/eyrie/cache", mod.name
 
       Dir.cd(loc) do
-        includes = Dir.glob mod.files.include
-        excludes = Dir.glob mod.files.exclude
+        includes = Dir.glob mod.files.includes
+        excludes = Dir.glob mod.files.excludes
         includes.reject! &.in? excludes
 
         if includes.empty?
@@ -118,34 +118,38 @@ module Eyrie
       if install = deps.install
         # install = parse_non_conflict install
 
-        unless install.composer.empty?
-          if ex = exec "composer --version"
-            Log.error ex, "cannot install php dependencies without composer"
-            return
-          end
+        if composer = install.composer
+          unless composer.empty?
+            if ex = exec "composer --version"
+              Log.error ex, "cannot install php dependencies without composer"
+              return
+            end
 
-          install.composer.each do |name, version|
-            name += ":" + version unless version.empty? || version == "*"
-            if ex = exec %(composer require "#{name}")
-              Log.error ex, "dependency '#{name}' failed to install"
-            else
-              @composer_deps[name] = version
+            composer.each do |name, version|
+              name += ":" + version unless version.empty? || version == "*"
+              if ex = exec %(composer require "#{name}")
+                Log.error ex, "dependency '#{name}' failed to install"
+              else
+                @composer_deps[name] = version
+              end
             end
           end
         end
 
-        unless install.npm.empty?
-          if ex = exec "npm --version"
-            Log.error ex, "cannot install node dependencies without npm"
-            return
-          end
+        if npm = install.npm
+          unless npm.empty?
+            if ex = exec "npm --version"
+              Log.error ex, "cannot install node dependencies without npm"
+              return
+            end
 
-          install.npm.each do |name, version|
-            name += "@" + version unless version.empty? || version == "*"
-            if ex = exec "npm install #{name}"
-              Log.error ex, "dependency '#{name}' failed to install"
-            else
-              @npm_deps[name] = version
+            npm.each do |name, version|
+              name += "@" + version unless version.empty? || version == "*"
+              if ex = exec "npm install #{name}"
+                Log.error ex, "dependency '#{name}' failed to install"
+              else
+                @npm_deps[name] = version
+              end
             end
           end
         end

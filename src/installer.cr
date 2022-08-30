@@ -70,7 +70,7 @@ module Eyrie::Installer
   end
 
   def self.write_lockfile(mods : Array(Module)) : Nil
-    spec = LockSpec.new
+    spec = LockSpec.new LOCK_VERSION, [] of ModuleSpec
     spec.modules = mods.map &.to_spec
 
     File.write LOCK_PATH, spec.to_yaml

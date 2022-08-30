@@ -5,7 +5,7 @@ module Eyrie::Initializer
       return
     end
 
-    File.write LOCK_PATH, LockSpec.new.to_yaml
+    File.write LOCK_PATH, LockSpec.default.to_yaml
     Log.info "created lockfile at:\n#{LOCK_PATH}"
   rescue ex
     Log.error ex, "failed to write to lockfile"
@@ -29,7 +29,7 @@ module Eyrie::Initializer
     end
 
     begin
-      File.write MOD_PATH, Module.new.to_yaml
+      File.write MOD_PATH, Module.default.to_yaml
       Log.info "created module file at:\n#{MOD_PATH}"
     rescue ex
       Log.error ex, "failed to write to module file"
@@ -50,10 +50,10 @@ module Eyrie::Initializer
       "Press '^C' (Ctrl+C) at any time to exit\n\n"
     ]
 
-    mod = Module.new
+    mod = Module.default
     mod.authors.clear
     author = Author.new "your-name-here", "your@contact.here"
-    source = Source.new "url-to-source"
+    source = Source.new "url-to-source", :local
 
     prompt("module name: ", can_skip: false) do |value|
       if value =~ %r[[^a-z0-9_-]]
