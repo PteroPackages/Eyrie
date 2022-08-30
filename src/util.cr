@@ -60,11 +60,4 @@ module Eyrie::Util
     end
   rescue
   end
-
-  # def self.each_in_mapping(yaml : YAML::PullParser, &) : Nil
-  #   until yaml.kind == YAML::EventKind::MAPPING_END
-  #     yield
-  #   end
-  #   yaml.read_mapping_end
-  # end
 end

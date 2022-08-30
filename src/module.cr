@@ -28,13 +28,13 @@ module Eyrie
 
     def initialize(@url, type : String)
       @type = case type
-      when "local"  then SourceType::Local
-      when "git"    then SourceType::Git
-      when "github" then SourceType::Github
-      when "gitlab" then SourceType::Gitlab
-      else
-        raise "invalid source type '#{type}'"
-      end
+              when "local"  then SourceType::Local
+              when "git"    then SourceType::Git
+              when "github" then SourceType::Github
+              when "gitlab" then SourceType::Gitlab
+              else
+                raise "invalid source type '#{type}'"
+              end
     end
 
     def self.new(data : YAML::Any)
@@ -43,13 +43,13 @@ module Eyrie
 
       rawtype = data["type"].as_s
       type = case rawtype
-      when "local"  then SourceType::Local
-      when "git"    then SourceType::Git
-      when "github" then SourceType::Github
-      when "gitlab" then SourceType::Gitlab
-      else
-        raise "invalid source type '#{rawtype}'"
-      end
+             when "local"  then SourceType::Local
+             when "git"    then SourceType::Git
+             when "github" then SourceType::Github
+             when "gitlab" then SourceType::Gitlab
+             else
+               raise "invalid source type '#{rawtype}'"
+             end
 
       new data["url"].as_s, type
     end
@@ -147,10 +147,10 @@ module Eyrie
       raise "missing file specifications for module" unless data["files"]?
 
       authors = if data["authors"]?
-        data["authors"].as_a.map { |a| Author.new a }
-      else
-        [] of Author
-      end
+                  data["authors"].as_a.map { |a| Author.new a }
+                else
+                  [] of Author
+                end
 
       source = data["source"]?.try { |s| Source.new s }
       deps = data["dependencies"]?.try { |d| Deps.new d } || Deps.new
