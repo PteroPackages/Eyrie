@@ -92,9 +92,16 @@ module Eyrie
       loc = File.join "/var/eyrie/cache", mod.name
 
       Dir.cd(loc) do
-        includes = Dir.glob mod.files.includes
-        excludes = Dir.glob mod.files.excludes
+        parts, abs = mod.files.includes.partition &.includes? '*'
+        includes = abs
+        includes += parts.flat_map { |p| Dir.glob p } unless parts.empty?
+
+        parts, abs = mod.files.excludes.partition &.includes? '*'
+        excludes = abs
+        excludes += parts.flat_map { |p| Dir.glob p } unless parts.empty?
+
         includes.reject! &.in? excludes
+        includes.reject! { |p| Dir.exists? p }
 
         if includes.empty?
           Log.error "no included files were resolved"

@@ -27,7 +27,7 @@ module Eyrie
     def initialize(@url, @type); end
 
     def initialize(@url, type : String)
-      @type = case type
+      @type = case type.downcase
               when "local"  then SourceType::Local
               when "git"    then SourceType::Git
               when "github" then SourceType::Github
@@ -41,17 +41,7 @@ module Eyrie
       raise "missing url for module source" unless data["url"]?
       raise "missing source type for module" unless data["type"]?
 
-      rawtype = data["type"].as_s
-      type = case rawtype
-             when "local"  then SourceType::Local
-             when "git"    then SourceType::Git
-             when "github" then SourceType::Github
-             when "gitlab" then SourceType::Gitlab
-             else
-               raise "invalid source type '#{rawtype}'"
-             end
-
-      new data["url"].as_s, type
+      new data["url"].as_s, data["type"].as_s
     end
 
     def validate : Nil
@@ -225,10 +215,12 @@ module Eyrie
             yaml.scalar "authors"
             yaml.sequence do
               @authors.each do |a|
-                yaml.scalar "name"
-                yaml.scalar a.name
-                yaml.scalar "contact"
-                yaml.scalar a.contact
+                yaml.mapping do
+                  yaml.scalar "name"
+                  yaml.scalar a.name
+                  yaml.scalar "contact"
+                  yaml.scalar a.contact
+                end
               end
             end
           end
