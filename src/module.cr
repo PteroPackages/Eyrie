@@ -56,12 +56,12 @@ module Eyrie
 
     def validate : Nil
       {% for src in %w(github gitlab) %}
-        if @type.{{ src.id }}? && !@url.starts_with?("https://{{ src.id }}.com")
-          @url = "https://{{ src.id }}.com/#{@url}"
+        if @type.{{ src.id }}? && @url.starts_with?("{{ src.id }}.com")
+          @url = "https://" + @url
         end
 
-        if @type.{{ src.id }}? && !@url.starts_with?("{{ src.id }}.com")
-          @url = "https://" + @url
+        if @type.{{ src.id }}? && !@url.starts_with?("https://{{ src.id }}.com")
+          @url = "https://{{ src.id }}.com/#{@url}"
         end
       {% end %}
 
