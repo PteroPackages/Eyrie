@@ -83,14 +83,16 @@ module Eyrie
 
     def to_yaml : String
       YAML.build do |yaml|
-        yaml.scalar "lock_version"
-        yaml.scalar @version
+        yaml.mapping do
+          yaml.scalar "lock_version"
+          yaml.scalar @version
 
-        yaml.scalar "modules"
-        yaml.sequence do
-          @modules.each do |spec|
-            yaml.mapping do
-              spec.to_yaml yaml
+          yaml.scalar "modules"
+          yaml.sequence do
+            @modules.each do |spec|
+              yaml.mapping do
+                spec.to_yaml yaml
+              end
             end
           end
         end

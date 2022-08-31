@@ -39,6 +39,8 @@ module Eyrie::Commands
 
       Log.fatal "no modules found to install" if modules.empty?
       Installer.run modules, options.has?("no-lock")
+    rescue ex
+      Log.fatal ex
     end
   end
 end
