@@ -1,4 +1,3 @@
-require "file_utils"
 require "./resolvers/*"
 
 module Eyrie::Installer
@@ -64,6 +63,8 @@ module Eyrie::Installer
       mod
     rescue ex : YAML::ParseException
       Log.error ex, "failed to parse module for '#{spec.name}'"
+    rescue ex : File::Error
+      Log.error "module file not found for '#{spec.name}'"
     rescue ex
       Log.error ex
     end

@@ -1,6 +1,5 @@
 module Eyrie::Util
   def self.run_prerequisites : Nil
-    Log.vinfo "checking panel availability"
     Log.vinfo "checking cache availability"
 
     unless Dir.exists? "/var/eyrie/cache"

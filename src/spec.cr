@@ -72,9 +72,7 @@ module Eyrie
     end
 
     def self.from_path(path : String)
-      raise "lockfile path does not exist: #{path}" unless File.exists? path
-      data = YAML.parse File.read(path)
-      new data
+      new YAML.parse File.read(path)
     end
 
     def self.default

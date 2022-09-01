@@ -33,8 +33,14 @@ module Eyrie::Commands
           Log.fatal ex
         end
       else
-        spec = LockSpec.from_path LOCK_PATH
-        modules += spec.modules
+        begin
+          spec = LockSpec.from_path LOCK_PATH
+          modules += spec.modules
+        rescue File::Error
+          Log.fatal ["lockfile path does not exist:", LOCK_PATH]
+        rescue ex
+          Log.fatal ex
+        end
       end
 
       Log.fatal "no modules found to install" if modules.empty?

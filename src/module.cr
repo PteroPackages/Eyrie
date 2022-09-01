@@ -6,10 +6,7 @@ module Eyrie
     def initialize(@name, @contact); end
 
     def self.new(data : YAML::Any)
-      name = data["name"].try &.as_s
-      contact = data["contact"].try &.as_s
-
-      new(name || "", contact || "")
+      new(data["name"].as_s? || "", data["name"].as_s? || "")
     end
   end
 
@@ -160,7 +157,6 @@ module Eyrie
     end
 
     def self.from_path(path : String)
-      raise "module file path not found" unless File.exists? path
       new YAML.parse File.read(path)
     end
 
