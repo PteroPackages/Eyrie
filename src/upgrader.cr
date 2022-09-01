@@ -2,6 +2,7 @@ module Eyrie
   class Upgrader
     def self.run(specs : Array(ModuleSpec), no_lock : Bool) : Nil
       Util.run_prerequisites
+      Log.fatal "no modules have been installed or saved" if specs.empty?
 
       start = Time.monotonic
       specs.each do |spec|

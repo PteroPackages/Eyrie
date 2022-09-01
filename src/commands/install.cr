@@ -3,12 +3,13 @@ module Eyrie::Commands
     def setup : Nil
       @name = "install"
       @description = "Installs modules from a source or lockfile."
-      @usage << "install [-s|--source <url>] [-L|--no-lock] [-v|--verbose] [options]"
+      @usage << "install [-s|--source <url>] [-L|--no-lock] [-v|--verbose] [--version <v>] [options]"
 
       add_option "no-lock", short: "L", desc: "don't save the modules in the lockfile"
       add_option "source", short: "s", desc: "the url or path to the module source", kind: :string
       add_option "type", short: "t", desc: "the type of source to install from", kind: :string, default: "local"
       add_option "verbose", short: "v", desc: "output debug and verbose logs"
+      add_option "version", desc: "the version of the module to install", kind: :string, default: "*"
       set_global_options
     end
 
@@ -28,7 +29,7 @@ module Eyrie::Commands
       if source
         begin
           name = source.split('/').pop.downcase.underscore
-          modules << ModuleSpec.new(name, "*", source, options.get!("type"))
+          modules << ModuleSpec.new(name, options.get!("version"), source, options.get!("type"))
         rescue ex
           Log.fatal ex
         end

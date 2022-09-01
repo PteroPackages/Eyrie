@@ -27,8 +27,14 @@ module Eyrie::Commands
 
         Upgrader.run [mod.to_spec], options.has?("no-color")
       else
-        spec = LockSpec.from_path LOCK_PATH
-        Upgrader.run spec.modules, options.has?("no-color")
+        begin
+          spec = LockSpec.from_path LOCK_PATH
+          Upgrader.run spec.modules, options.has?("no-color")
+        rescue File::Error
+          Log.fatal ["lockfile path does not exist:", LOCK_PATH]
+        rescue ex
+          Log.fatal ex
+        end
       end
     end
   end
