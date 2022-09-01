@@ -4,7 +4,7 @@ require "./resolver"
 module Eyrie
   class LocalResolver < Resolver
     def self.run(spec : ModuleSpec) : Bool
-      mod = Module.from_path spec.source.url
+      mod = Module.from_path spec.source.uri
       mod.validate
 
       unless src = mod.source
@@ -14,10 +14,10 @@ module Eyrie
 
       return GitResolver.run mod.to_spec unless src.type.local?
 
-      path = if src.url.starts_with? '.'
-               File.expand_path File.join(Dir.current, src.url)
+      path = if src.uri.starts_with? '.'
+               File.expand_path File.join(Dir.current, src.uri)
              else
-               File.expand_path src.url
+               File.expand_path src.uri
              end
 
       unless File.exists? path
@@ -34,6 +34,9 @@ module Eyrie
       end
 
       true
+    rescue ex
+      Log.error ex, "failed to resolve module '#{spec.name}':"
+      false
     end
   end
 end

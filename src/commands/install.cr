@@ -39,7 +39,7 @@ module Eyrie::Commands
         rescue File::Error
           Log.fatal ["lockfile path does not exist:", LOCK_PATH]
         rescue ex
-          Log.fatal ex
+          Log.fatal ex, "failed to parse lockfile:"
         end
       end
 

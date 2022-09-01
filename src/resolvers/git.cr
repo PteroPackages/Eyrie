@@ -9,8 +9,8 @@ module Eyrie
       spec.validate
 
       loop do
-        Log.vinfo "cloning: #{spec.source.url}"
-        if ex = exec "git clone -c core.askPass=true #{spec.source.url} #{cache}"
+        Log.vinfo "cloning: #{spec.source.uri}"
+        if ex = exec "git clone -c core.askPass=true #{spec.source.uri} #{cache}"
           Log.error ex, "failed to clone repository"
           break if count == 0
           count += 1

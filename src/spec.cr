@@ -46,8 +46,8 @@ module Eyrie
 
       yaml.scalar "source"
       yaml.mapping do
-        yaml.scalar "url"
-        yaml.scalar @source.url
+        yaml.scalar "uri"
+        yaml.scalar @source.uri
         yaml.scalar "type"
         yaml.scalar @source.type
       end

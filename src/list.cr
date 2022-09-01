@@ -72,8 +72,8 @@ module Eyrie::List
     return "not set" unless src = source
 
     src.validate
-    valid = URI.try &.parse(src.url)
-    str = src.url.ends_with?(".git") ? src.url[...-4] : src.url
+    valid = URI.parse(src.uri) rescue nil
+    str = src.uri.ends_with?(".git") ? src.uri[...-4] : src.uri
     str += <<-FMT
 
     type:       #{src.type}

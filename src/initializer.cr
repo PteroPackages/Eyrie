@@ -74,8 +74,8 @@ module Eyrie::Initializer
 
     prompt("author name: (your-name-here) ") { |v| author.name = v }
     prompt("author contact: (your@contact.here) ") { |v| author.contact = v }
-    prompt("source: (url-to-source) ") do |value|
-      source.url = value
+    prompt("source: (uri-to-source) ") do |value|
+      source.uri = value
 
       case value
       when .includes? "github" then source.type = :github
@@ -118,7 +118,7 @@ module Eyrie::Initializer
   end
 
   private def self.prompt(message : String, *, can_skip : Bool = true,
-                          default : String? = nil, &block : String ->)
+                          default : String? = nil, &block : String ->) : Nil
     loop do
       STDOUT << message
       input = STDIN.gets || ""

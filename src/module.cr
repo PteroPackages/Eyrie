@@ -18,12 +18,12 @@ module Eyrie
   end
 
   struct Source
-    property url : String
+    property uri : String
     property type : SourceType
 
-    def initialize(@url, @type); end
+    def initialize(@uri, @type); end
 
-    def initialize(@url, type : String)
+    def initialize(@uri, type : String)
       @type = case type.downcase
               when "local"  then SourceType::Local
               when "git"    then SourceType::Git
@@ -35,24 +35,24 @@ module Eyrie
     end
 
     def self.new(data : YAML::Any)
-      raise "missing url for module source" unless data["url"]?
+      raise "missing uri for module source" unless data["uri"]?
       raise "missing source type for module" unless data["type"]?
 
-      new data["url"].as_s, data["type"].as_s
+      new data["uri"].as_s, data["type"].as_s
     end
 
     def validate : Nil
       {% for src in %w(github gitlab) %}
-        if @type.{{ src.id }}? && @url.starts_with?("{{ src.id }}.com")
-          @url = "https://" + @url
+        if @type.{{ src.id }}? && @uri.starts_with?("{{ src.id }}.com")
+          @uri = "https://" + @uri
         end
 
-        if @type.{{ src.id }}? && !@url.starts_with?("https://{{ src.id }}.com")
-          @url = "https://{{ src.id }}.com/#{@url}"
+        if @type.{{ src.id }}? && !@uri.starts_with?("https://{{ src.id }}.com")
+          @uri = "https://{{ src.id }}.com/#{@uri}"
         end
       {% end %}
 
-      @url += ".git" unless @type.local? && @url.ends_with?(".git")
+      @uri += ".git" unless @type.local? && @uri.ends_with?(".git")
     end
   end
 
@@ -165,7 +165,7 @@ module Eyrie
         "module-name",
         "0.0.1",
         [Author.new("your-name-here", "your@contact.here")],
-        Source.new("url-to-source", :local),
+        Source.new("uri-to-source", :local),
         "",
         Deps.new,
         Files.default,
@@ -224,8 +224,8 @@ module Eyrie
           if src = @source
             yaml.scalar "source"
             yaml.mapping do
-              yaml.scalar "url"
-              yaml.scalar src.url
+              yaml.scalar "uri"
+              yaml.scalar src.uri
               yaml.scalar "type"
               yaml.scalar src.type
             end
