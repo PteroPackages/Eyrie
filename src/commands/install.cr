@@ -25,8 +25,7 @@ module Eyrie::Commands
 
       modules = [] of ModuleSpec
 
-      source = options.get "source"
-      if source
+      if source = options.get "source"
         begin
           name = source.split('/').pop.downcase.underscore
           modules << ModuleSpec.new(name, options.get!("version"), source, options.get!("type"))
@@ -48,6 +47,8 @@ module Eyrie::Commands
       Installer.run modules, options.has?("no-lock")
     rescue ex
       Log.fatal ex
+    ensure
+      Util.rm_rf "/var/eyrie/cache/*"
     end
   end
 end
