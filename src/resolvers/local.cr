@@ -6,7 +6,12 @@ module Eyrie
     def self.run(spec : ModuleSpec) : Bool
       mod = Module.from_path spec.source.uri
       mod.validate
+      run mod
+    rescue ex
+      Log.fatal ex
+    end
 
+    def self.run(mod : Module) : Bool
       unless src = mod.source
         Log.error "no source set for module '#{mod.name}', cannot install"
         return false
@@ -35,7 +40,7 @@ module Eyrie
 
       true
     rescue ex
-      Log.error ex, "failed to resolve module '#{spec.name}':"
+      Log.error ex, "failed to resolve module '#{mod.name}':"
       false
     end
   end

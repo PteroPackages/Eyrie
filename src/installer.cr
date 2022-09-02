@@ -41,6 +41,40 @@ module Eyrie::Installer
     Log.info "installed #{done.size} module#{"s" if done.size != 1} in #{taken.milliseconds}ms"
   end
 
+  def self.run_local(path : String, version : String, no_lock : Bool) : Nil
+    Util.run_prerequisites
+
+    Log.fatal [
+      "source module file not found:", path,
+      "make sure you are using the correct relative or absolute path"
+    ] unless File.exists? path
+
+    Log.fatal [
+      "invalid version requirement format",
+      "version requirements must be in the major.minor.patch format"
+    ] unless version.matches? /^(?:\*|\d+\.\d+\.\d+)$/
+
+    start = Time.monotonic
+    begin
+      mod = Module.from_path path
+      mod.validate
+    rescue ex : YAML::ParseException
+      Log.fatal ex, "failed to parse local module:"
+    rescue ex
+      Log.fatal ex
+    end
+
+    return unless LocalResolver.run mod
+    Log.info "installing 1 module"
+
+    proc = Processor.new "/var/www/pterodactyl"
+    Log.fatal "no modules could be resolved" unless proc.run mod
+    write_lockfile([mod]) unless no_lock
+
+    taken = Time.monotonic - start
+    Log.info "installed 1 module in #{taken.milliseconds}ms"
+  end
+
   def self.install(spec : ModuleSpec) : Module?
     res = if spec.source.type.local?
             LocalResolver.run spec
@@ -50,7 +84,7 @@ module Eyrie::Installer
     return unless res
 
     path = if spec.source.type.local?
-             File.expand_path File.join(Dir.current, spec.source.url)
+             File.expand_path File.join(Dir.current, spec.source.uri)
            else
              File.join "/var/eyrie/cache", spec.name, "eyrie.module.yml"
            end

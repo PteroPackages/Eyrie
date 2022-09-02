@@ -23,32 +23,26 @@ module Eyrie::Commands
       Log.trace if options.has? "trace"
       Log.verbose if options.has? "verbose"
 
-      modules = [] of ModuleSpec
-
       if source = options.get "source"
-        begin
-          name = source.split('/').pop.downcase.underscore
-          modules << ModuleSpec.new(name, options.get!("version"), source, options.get!("type"))
-        rescue ex
-          Log.fatal ex
+        name = source.split('/').pop.downcase.underscore
+        version = options.get! "version"
+
+        if options.get!("type") == "local"
+          Installer.run_local name, version, options.has?("no-lock")
+        else
+          spec = ModuleSpec.new name, version, source, options.get!("type")
+          Installer.run [spec], options.has?("no-lock")
         end
       else
         begin
-          spec = LockSpec.from_path LOCK_PATH
-          modules += spec.modules
+          lock = LockSpec.from_path LOCK_PATH
+          Installer.run lock.modules, options.has?("no-lock")
         rescue File::Error
           Log.fatal ["lockfile path does not exist:", LOCK_PATH]
         rescue ex
           Log.fatal ex, "failed to parse lockfile:"
         end
       end
-
-      Log.fatal "no modules found to install" if modules.empty?
-      Installer.run modules, options.has?("no-lock")
-    rescue ex
-      Log.fatal ex
-    ensure
-      Util.rm_rf "/var/eyrie/cache/*"
     end
   end
 end
