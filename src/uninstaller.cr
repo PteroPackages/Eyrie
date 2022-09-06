@@ -16,6 +16,7 @@ module Eyrie::Uninstaller
 
       remove_files mod.files
       cleanup_cache mod.name
+      write_lockfile mod.name
     end
 
     Log.info "uninstalled module '#{mod.name}' in #{taken.milliseconds}ms"
@@ -34,7 +35,7 @@ module Eyrie::Uninstaller
       includes.reject! &.in? excludes
       includes.reject! { |p| Dir.exists? p }
 
-      return Log.error "no module files found to remove" if includes.empty?
+      return Log.warn "no module files found to remove" if includes.empty?
 
       Log.vinfo "removing module files"
       includes.each do |path|
@@ -70,5 +71,14 @@ module Eyrie::Uninstaller
         Log.warn ex, "failed to clean cache directory"
       end
     end
+  end
+
+  private def self.write_lockfile(name : String) : Nil
+    lock = LockSpec.from_path LOCK_PATH
+    lock.modules.reject! { |m| m.name == name }
+
+    File.write LOCK_PATH, lock.to_yaml
+  rescue ex
+    Log.error ex, "failed to save lockfile"
   end
 end
