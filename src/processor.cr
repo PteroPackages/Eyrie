@@ -2,8 +2,6 @@ module Eyrie
   class Processor
     @version : SemanticVersion
     @panel_path : String
-    @composer_deps : Hash(String, String)
-    @npm_deps : Hash(String, String)
 
     def initialize(@panel_path)
       unless Dir.exists? @panel_path
@@ -41,27 +39,12 @@ module Eyrie
         Log.fatal ex, "failed to parse panel version"
       end
       Log.vinfo "using panel version #{@version}"
-
-      @composer_deps = {} of String => String
-      @npm_deps = {} of String => String
     end
 
     def run(mod : Module) : Bool
       Log.warn "no authors set for the package" if mod.authors.empty?
 
-      # TODO: attempt to fix invalid version formats (+.0)?
-      # still warn about them
-      mod.supports =~ /[*~<|>=^]*\d+\.\d+(\.\d+)?[*~<|>=^]*/
-      unless $1?
-        Log.error [
-          "cannot accept supported version requirement '#{mod.supports}'",
-          "version requirements must be in the major.minor.match format"
-        ]
-        return false
-      end
-
       valid = false
-
       if mod.supports.matches? /[*~<|>=^]+/
         if mod.supports.includes? '|'
           valid = SemanticCompare.complex_expression @version, mod.supports
@@ -79,7 +62,7 @@ module Eyrie
       end
 
       return false unless resolve_files mod
-      resolve_dependencies mod.deps
+      install_dependencies mod.deps
       exec_postinstall mod.postinstall
       save_module mod
 
@@ -121,49 +104,53 @@ module Eyrie
       true
     end
 
-    private def resolve_dependencies(deps : Deps) : Nil
-      if install = deps.install
-        # install = parse_non_conflict install
+    # TODO: add info logs
+    private def install_dependencies(deps : Deps) : Nil
+      return unless install = deps.install
 
-        if composer = install.composer
-          unless composer.empty?
-            if ex = exec "composer --version"
-              Log.error ex, "cannot install php dependencies without composer"
-              return
-            end
-
-            composer.each do |name, version|
-              name += ":" + version unless version.empty? || version == "*"
-              if ex = exec %(composer require "#{name}")
-                Log.error ex, "dependency '#{name}' failed to install"
-              else
-                @composer_deps[name] = version
-              end
-            end
+      if composer = install.composer
+        unless composer.empty?
+          unless path = Process.find_executable "composer"
+            Log.error "cannot install php dependencies without composer"
+            return
           end
-        end
 
-        if npm = install.npm
-          unless npm.empty?
-            if ex = exec "npm --version"
-              Log.error ex, "cannot install node dependencies without npm"
-              return
-            end
-
-            npm.each do |name, version|
-              name += "@" + version unless version.empty? || version == "*"
-              if ex = exec "npm install #{name}"
-                Log.error ex, "dependency '#{name}' failed to install"
-              else
-                @npm_deps[name] = version
-              end
+          composer.each do |name, version|
+            name += ":" + version unless version.empty? || version == "*"
+            if ex = exec "'#{path}' require #{name}"
+              Log.error ex, "dependency '#{name}' failed to install"
             end
           end
         end
       end
 
-      # TODO: remove dependencies
+      if npm = install.npm
+        unless npm.empty?
+          unless path = Process.find_executable "npm"
+            Log.error "cannot install node dependencies without npm"
+            return
+          end
+
+          npm.each do |name, version|
+            name += "@" + version unless version.empty? || version == "*"
+            if ex = exec "'#{path}' install #{name}"
+              if ex.message.try &.includes? "bash\\r" # CRLF issue
+                Log.error [
+                  "cannot execute npm on this system (invalid format)",
+                  "skipping all npm dependency installations"
+                ]
+                return
+              else
+                Log.error ex, "dependency '#{name}' failed to install"
+              end
+            end
+          end
+        end
+      end
     end
+
+    # TODO
+    # private def remove_depdendencies(deps : Deps) : Nil
 
     private def exec_postinstall(scripts : Array(String)) : Nil
       return if scripts.empty?
@@ -190,7 +177,10 @@ module Eyrie
 
     private def exec(command : String) : Exception?
       Log.vinfo command
-      Process.exec command, shell: true, chdir: "/var/www/pterodactyl"
+      err = IO::Memory.new
+
+      Process.run command, error: err, chdir: "/var/www/pterodactyl", shell: true
+      raise err.to_s unless err.empty?
     rescue ex
       ex
     end
