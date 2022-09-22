@@ -1,58 +1,62 @@
 module Eyrie
-  struct Author
-    property name : String
-    property contact : String
+  class Author
+    property name : String?
+    property contact : String?
 
-    def initialize(@name, @contact); end
+    def initialize(@name, @contact)
+    end
 
     def self.new(data : YAML::Any)
-      new(data["name"].as_s? || "", data["name"].as_s? || "")
+      new data["name"].as_s?, data["contact"].as_s?
     end
-  end
 
-  enum SourceType
-    Local
-    Git
-    Github
-    Gitlab
+    def to_yaml(yaml : YAML::Builder) : Nil
+      return unless @name
+
+      yaml.scalar "name"
+      yaml.scalar @name
+
+      if @contact
+        yaml.scalar "contact"
+        yaml.scalar @contact
+      end
+    end
   end
 
   struct Source
+    enum Type
+      Local
+      Git
+      Github
+      Gitlab
+    end
+
     property uri : String
-    property type : SourceType
+    property type : Type
 
-    def initialize(@uri, @type); end
-
-    def initialize(@uri, type : String)
-      @type = case type.downcase
-              when "local"  then SourceType::Local
-              when "git"    then SourceType::Git
-              when "github" then SourceType::Github
-              when "gitlab" then SourceType::Gitlab
-              else
-                raise "invalid source type '#{type}'"
-              end
-    end
-
-    def self.new(data : YAML::Any)
-      raise "missing uri for module source" unless data["uri"]?
-      raise "missing source type for module" unless data["type"]?
-
-      new data["uri"].as_s, data["type"].as_s
-    end
-
-    def validate : Nil
+    def initialize(@uri, @type)
       {% for src in %w(github gitlab) %}
-        if @type.{{ src.id }}? && @uri.starts_with?("{{ src.id }}.com")
-          @uri = "https://" + @uri
-        end
+      if @type.{{ src.id }}? && @uri.starts_with?("{{ src.id }}.com")
+        @uri = "https://" + @uri
+      end
 
-        if @type.{{ src.id }}? && !@uri.starts_with?("https://{{ src.id }}.com")
-          @uri = "https://{{ src.id }}.com/#{@uri}"
-        end
+      if @type.{{ src.id }}? && !@uri.starts_with?("https://{{ src.id }}.com")
+        @uri = "https://{{ src.id }}.com/#{@uri}"
+      end
       {% end %}
 
       @uri += ".git" unless @type.local? && @uri.ends_with?(".git")
+    end
+
+    def self.new(uri, type : String)
+      new uri, Type.parse(type)
+    end
+
+    def self.new(data : YAML::Any)
+      raise "missing uri for source" unless data["uri"]?
+      raise "missing type for source" unless data["type"]?
+
+      new data["uri"].as_s, data["type"].as_s
     end
   end
 
@@ -60,7 +64,8 @@ module Eyrie
     property composer : Hash(String, String)?
     property npm : Hash(String, String)?
 
-    def initialize(@composer = nil, @npm = nil); end
+    def initialize(@composer, @npm)
+    end
 
     def self.new(data : YAML::Any)
       composer = data["composer"]?.try &.as_h.map { |k, v| {k.as_s, v.as_s} }.to_h
@@ -68,17 +73,40 @@ module Eyrie
 
       new composer, npm
     end
+
+    def to_yaml(yaml : YAML::Builder) : Nil
+      if c = @composer
+        yaml.scalar "composer"
+        yaml.mapping do
+          c.each do |k, v|
+            yaml.scalar k
+            yaml.scalar v
+          end
+        end
+      end
+
+      if n = @npm
+        yaml.scalar "npm"
+        yaml.mapping do
+          n.each do |k, v|
+            yaml.scalar k
+            yaml.scalar v
+          end
+        end
+      end
+    end
   end
 
   struct Deps
     property install : CmdDepSpec?
     property remove : CmdDepSpec?
 
-    def initialize(@install = nil, @remove = nil); end
+    def initialize(@install, @remove)
+    end
 
     def self.new(data : YAML::Any)
-      install = data["install"]?.try { |s| CmdDepSpec.new s }
-      remove = data["remove"]?.try { |s| CmdDepSpec.new s }
+      install = data["install"]?.try { |s| CmdDepSpec.new(s) }
+      remove = data["remove"]?.try { |s| CmdDepSpec.new(s) }
 
       new install, remove
     end
@@ -86,15 +114,14 @@ module Eyrie
 
   struct Files
     property includes : Array(String)
-    property excludes : Array(String) = [] of String
-    property mappings : Hash(String, String) = {} of String => String
-    property remove : Array(String) = [] of String
+    property excludes : Array(String)
+    property mappings : Hash(String, String)
+    property remove : Array(String)
 
-    def initialize(@includes, @excludes, @mappings, @remove); end
+    def initialize(@includes, @excludes, @mappings, @remove)
+    end
 
     def self.new(data : YAML::Any)
-      raise "missing include field for files" unless data["include"]?
-
       includes = data["include"].as_a.map &.as_s
       excludes = data["exclude"]?.try(&.as_a.map(&.as_s)) || [] of String
       mappings = data["mappings"]?.try(&.as_h.map { |k, v| {k.as_s, v.as_s} }.to_h) || {} of String => String
@@ -111,11 +138,42 @@ module Eyrie
         [] of String
       )
     end
+
+    def to_yaml(yaml : YAML::Builder) : Nil
+      yaml.scalar "include"
+      yaml.sequence do
+        @includes.each { |f| yaml.scalar(f) }
+      end
+
+      unless @excludes.empty?
+        yaml.scalar "exclude"
+        yaml.sequence do
+          @excludes.each { |f| yaml.scalar(f) }
+        end
+      end
+
+      unless @mappings.empty?
+        yaml.scalar "mappings"
+        yaml.mapping do
+          @mappings.each do |k, v|
+            yaml.scalar k
+            yaml.scalar v
+          end
+        end
+      end
+
+      unless @remove.empty?
+        yaml.scalar "remove"
+        yaml.sequence do
+          @remove.each { |f| yaml.scalar(f) }
+        end
+      end
+    end
   end
 
-  struct Module
+  class Module
     property name : String
-    property version : String
+    property version : SemanticVersion
     property authors : Array(Author)
     property source : Source?
     property supports : String
@@ -123,8 +181,7 @@ module Eyrie
     property files : Files
     property postinstall : Array(String)
 
-    def initialize(@name, @version, @authors, @source, @supports, @deps,
-                   @files, @postinstall)
+    def initialize(@name, @version, @authors, @source, @supports, @deps, @files, @postinstall)
     end
 
     def self.new(data : YAML::Any)
@@ -133,20 +190,21 @@ module Eyrie
       raise "missing supported version requirement for module" unless data["supports"]?
       raise "missing file specifications for module" unless data["files"]?
 
+      version = SemanticVersion.parse data["version"].as_s
       authors = if data["authors"]?
-                  data["authors"].as_a.map { |a| Author.new a }
-                else
-                  [] of Author
-                end
+        data["authors"].as_a.map { |a| Author.new(a) }
+      else
+        [] of Author
+      end
 
-      source = data["source"]?.try { |s| Source.new s }
-      deps = data["dependencies"]?.try { |d| Deps.new d } || Deps.new
+      source = data["source"]?.try { |s| Source.new(s) }
+      deps = data["dependencies"]?.try { |d| Deps.new(d) } || Deps.new(nil, nil)
       files = Files.new data["files"]
       scripts = data["postinstall"]?.try(&.as_a.map(&.as_s)) || [] of String
 
       new(
         data["name"].as_s,
-        data["version"].as_s,
+        version,
         authors,
         source,
         data["supports"].as_s,
@@ -163,36 +221,21 @@ module Eyrie
     def self.default
       new(
         "module-name",
-        "0.0.1",
+        SemanticVersion.new(0, 0, 1),
         [Author.new("your-name-here", "your@contact.here")],
         Source.new("uri-to-source", :local),
         "",
-        Deps.new,
+        Deps.new(nil, nil),
         Files.default,
         [] of String
       )
     end
 
-    def validate : Nil
-      if @name.matches? /[^a-z0-9_-]/
-        raise "name can only contain lowercase letters, numbers, dashes, and underscores"
-      end
+    def validate : Log::Status?
+      return Log::Status::INVALID_NAME if @name.matches? /[^a-z0-9_-]+/
 
-      begin
-        SemanticVersion.parse @version
-      rescue ex
-        raise Exception.new "invalid version format '#{@version}'", cause: ex
-      end
-
-      unless @supports.matches? /[*~<|>=^]*\d+\.\d+\.\d+[*~<|>=^]*/
-        raise "invalid supported version requirement"
-      end
-
-      if @files.includes.empty?
-        raise "no files included, cannot assume files to install"
-      end
-
-      @source.try &.validate
+      return Log::Status::INVALID_SUPPORTS unless @supports.matches? /^[*~<|>=^]*\d+\.\d+\.\d+[*~<|>=^]*$/
+      return Log::Status::NO_FILES if @files.includes.empty?
     end
 
     def to_spec : ModuleSpec
@@ -204,20 +247,14 @@ module Eyrie
         yaml.mapping do
           yaml.scalar "name"
           yaml.scalar @name
+
           yaml.scalar "version"
           yaml.scalar @version
 
           unless @authors.empty?
             yaml.scalar "authors"
             yaml.sequence do
-              @authors.each do |a|
-                yaml.mapping do
-                  yaml.scalar "name"
-                  yaml.scalar a.name
-                  yaml.scalar "contact"
-                  yaml.scalar a.contact
-                end
-              end
+              @authors.each &.to_yaml yaml
             end
           end
 
@@ -238,94 +275,27 @@ module Eyrie
             yaml.scalar "dependencies"
             yaml.mapping do
               if deps = @deps.install
-                if composer = deps.composer
-                  unless composer.empty?
-                    yaml.scalar "composer"
-                    yaml.mapping do
-                      composer.each do |k, v|
-                        yaml.scalar k
-                        yaml.scalar v
-                      end
-                    end
-                  end
-                end
-
-                if npm = deps.npm
-                  unless npm.empty?
-                    yaml.scalar "npm"
-                    yaml.mapping do
-                      npm.each do |k, v|
-                        yaml.scalar k
-                        yaml.scalar v
-                      end
-                    end
-                  end
+                yaml.scalar "install"
+                yaml.mapping do
+                  deps.to_yaml yaml
                 end
               end
 
               if deps = @deps.remove
-                if composer = deps.composer
-                  unless composer.empty?
-                    yaml.scalar "composer"
-                    yaml.mapping do
-                      composer.each do |k, v|
-                        yaml.scalar k
-                        yaml.scalar v
-                      end
-                    end
-                  end
-                end
-
-                if npm = deps.npm
-                  unless npm.empty?
-                    yaml.scalar "npm"
-                    yaml.mapping do
-                      npm.each do |k, v|
-                        yaml.scalar k
-                        yaml.scalar v
-                      end
-                    end
-                  end
+                yaml.scalar "remove"
+                yaml.mapping do
+                  deps.to_yaml yaml
                 end
               end
             end
           end
 
           yaml.scalar "files"
-          yaml.mapping do
-            yaml.scalar "include"
-            yaml.sequence do
-              @files.includes.each { |f| yaml.scalar f }
-            end
-
-            unless @files.excludes.empty?
-              yaml.scalar "exclude"
-              yaml.sequence do
-                @files.excludes.each { |f| yaml.scalar f }
-              end
-            end
-
-            unless @files.mappings.empty?
-              yaml.scalar "mappings"
-              yaml.mapping do
-                @files.mappings.each do |k, v|
-                  yaml.scalar k
-                  yaml.scalar v
-                end
-              end
-            end
-
-            unless @files.remove.empty?
-              yaml.scalar "remove"
-              yaml.sequence do
-                @files.remove.each { |f| yaml.scalar f }
-              end
-            end
-          end
+          @files.to_yaml yaml
 
           yaml.scalar "postinstall"
           yaml.sequence do
-            @postinstall.each { |s| yaml.scalar s }
+            @postinstall.each { |s| yaml.scalar(s) }
           end
         end
       end
