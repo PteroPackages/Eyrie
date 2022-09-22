@@ -1,6 +1,5 @@
 require "cli"
 require "colorize"
-require "file_utils"
 require "semantic_compare"
 require "semantic_version"
 require "yaml"
@@ -8,11 +7,9 @@ require "yaml"
 require "./commands/*"
 require "./initializer"
 require "./installer"
-require "./list"
+require "./lock"
 require "./log"
 require "./module"
-require "./processor"
-require "./spec"
 require "./uninstaller"
 require "./upgrader"
 require "./util"
@@ -26,10 +23,8 @@ macro set_global_options
 end
 
 module Eyrie
-  VERSION      = "0.1.0"
-  LOCK_VERSION = 1
-  MOD_PATH     = File.join Dir.current, "eyrie.module.yml"
-  LOCK_PATH    = File.join Dir.current, "eyrie.lock"
+  VERSION = "0.2.0"
+  LOCK_PATH = "/var/eyrie/eyrie.lock"
 
   def self.run : Nil
     app = CLI::Application.new
@@ -50,7 +45,6 @@ end
 begin
   Eyrie.run
 rescue ex
-  Eyrie::Log.trace
   Eyrie::Log.error ex
   Eyrie::Log.fatal ["", "this may be a bug with Eyrie, please report it to the PteroPackages team"]
 end
