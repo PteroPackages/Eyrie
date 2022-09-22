@@ -1,3 +1,7 @@
+{% if flag?(:win32) %}
+  {% raise "cannot run this application on windows systems yet" %}
+{% end %}
+
 require "cli"
 require "colorize"
 require "semantic_compare"
