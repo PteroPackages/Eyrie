@@ -1,25 +1,15 @@
 module Eyrie::Initializer
-  def self.init_lockfile(force : Bool) : Nil
-    if File.exists?(LOCK_PATH) && !force
-      Log.error "lockfile already exists in this directory"
-      return
-    end
+  def self.run(force : Bool, skip : Bool) : Nil
+    mod_path = File.join Dir.current, "eyrie.yml"
 
-    File.write LOCK_PATH, LockSpec.default.to_yaml
-    Log.info "created lockfile at:\n#{LOCK_PATH}"
-  rescue ex
-    Log.error ex, "failed to write to lockfile"
-  end
-
-  def self.init_module_file(force : Bool, skip : Bool, newline : Bool) : Nil
-    if File.exists?(MOD_PATH) && !force
+    if File.exists?(mod_path) && !force
       Log.error "module file already exists in this directory"
       return
     end
 
     unless skip
-      if can_read_term?
-        return init_interactive_setup newline
+      if STDIN.tty? && !STDIN.closed?
+        return run_interactive mod_path
       else
         Log.warn [
           "stdin input is not supported by this terminal",
@@ -29,22 +19,18 @@ module Eyrie::Initializer
     end
 
     begin
-      File.write MOD_PATH, Module.default.to_yaml
-      Log.info "created module file at:\n#{MOD_PATH}"
+      File.write mod_path, Module.default.to_yaml
+      Log.info "created module file at:\n#{mod_path}"
     rescue ex
       Log.error ex, "failed to write to module file"
     end
   end
 
-  private def self.can_read_term? : Bool
-    STDIN.tty? && !STDIN.closed?
-  end
-
-  private def self.init_interactive_setup(newline : Bool) : Nil
+  private def self.run_interactive(path : String) : Nil
     setup_trap
 
     Log.info [
-      "#{"\n" if newline}Welcome to the Eyrie interactive module setup",
+      "Welcome to the Eyrie interactive module setup",
       "This setup will walk you through creating an eyrie module file",
       "If you want to skip this setup, exit and run 'eyrie init --skip'",
       "Press '^C' (Ctrl+C) at any time to exit\n\n"
@@ -56,7 +42,7 @@ module Eyrie::Initializer
     source = Source.new "url-to-source", :local
 
     prompt("module name: ", can_skip: false) do |value|
-      if value =~ %r[[^a-z0-9_-]]
+      if value.matches? /[^a-z0-9_-]+/
         raise "name can only contain lowercase letters, numbers, dashes, and underscores"
       end
 
@@ -65,8 +51,7 @@ module Eyrie::Initializer
 
     prompt("version: (0.0.1) ", default: "0.0.1") do |value|
       begin
-        SemanticVersion.parse value
-        mod.version = value
+        mod.version = SemanticVersion.parse value
       rescue
         raise "invalid version format, must follow semver spec (no requirements)"
       end
@@ -99,8 +84,8 @@ module Eyrie::Initializer
     mod.source = source
 
     begin
-      File.write MOD_PATH, mod.to_yaml
-      Log.info "\ncreated module file at:\n#{MOD_PATH}"
+      File.write path, mod.to_yaml
+      Log.info "\ncreated module file at:\n#{path}"
     rescue ex
       Log.error ex, "failed to write to module file"
     end
@@ -120,7 +105,7 @@ module Eyrie::Initializer
   private def self.prompt(message : String, *, can_skip : Bool = true,
                           default : String? = nil, &block : String ->) : Nil
     loop do
-      STDOUT << message
+      Log.write message
       input = STDIN.gets || ""
       input = default if default && input.empty?
 
