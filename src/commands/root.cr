@@ -8,7 +8,7 @@ module Eyrie::Commands
               eyrie [options] <command> [arguments]
 
       Commands:
-              init        initializes a module or lock file
+              init        initializes a module file
               install     installs modules from sources
               list        lists all installed modules
               setup       setup eyrie configurations
@@ -35,7 +35,7 @@ module Eyrie::Commands
     end
 
     def execute(args, options) : Nil
-      if options.has?("version")
+      if options.has? "version"
         puts "Eyrie version #{VERSION}"
       else
         puts help_template

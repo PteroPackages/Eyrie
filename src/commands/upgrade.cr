@@ -12,30 +12,20 @@ module Eyrie::Commands
     end
 
     def execute(args, options) : Nil
-      Log.no_color if options.has? "no-color"
+      Log.configure options
 
-      {% if flag?(:win32) %}
-        Log.fatal "this command cannot be used on windows systems yet"
-      {% end %}
-
-      Log.trace if options.has? "trace"
-      Log.verbose if options.has? "verbose"
+      lock = Lockfile.from_path LOCK_PATH
 
       if name = args.get "name"
-        mod = List.get_modules.find { |m| m.name == name }
+        mod = lock.modules.find { |m| m.name == name }
         Log.fatal "module '#{name}' not found or is not installed" unless mod
 
-        Upgrader.run [mod.to_spec], options.has?("no-color")
+        Upgrader.run mod
       else
-        begin
-          spec = LockSpec.from_path LOCK_PATH
-          Upgrader.run spec.modules, options.has?("no-color")
-        rescue File::Error
-          Log.fatal ["lockfile path does not exist:", LOCK_PATH]
-        rescue ex
-          Log.fatal ex
-        end
+        Upgrader.run lock.modules
       end
+    rescue ex
+      Log.fatal ex
     end
   end
 end

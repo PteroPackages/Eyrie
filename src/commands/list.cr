@@ -2,24 +2,27 @@ module Eyrie::Commands
   class ListCommand < CLI::Command
     def setup : Nil
       @name = "list"
-      @description = "Lists all installed modules or gets info on a specific module."
-      @usage << "list [-n|--name <name>] [-v|--verbose] [options]"
+      @description = "Lists all installed modules and gets information on a specific module."
+      @usage << "list [-n|--name <name>] [options]"
 
       add_option "name", short: "n", desc: "the name of the module", kind: :string
-      add_option "verbose", short: "v", desc: "output debug and verbose logs"
       set_global_options
     end
 
     def execute(args, options) : Nil
-      Log.no_color if options.has? "no-color"
-      Log.trace if options.has? "trace"
-      Log.verbose if options.has? "verbose"
+      Log.configure options
 
+      lock = Lockfile.from_path LOCK_PATH
       if name = options.get "name"
-        List.get_module_info name
+        mod = lock.modules.find { |m| m.name == name }
+        Log.fatal "module '#{name}' not found or is not installed" unless mod
+
+        mod.format STDOUT
       else
-        List.list_modules
+        lock.modules.each &.format(STDOUT)
       end
+    rescue ex
+      Log.fatal ex
     end
   end
 end
