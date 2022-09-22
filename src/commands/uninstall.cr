@@ -13,7 +13,7 @@ module Eyrie::Commands
     def execute(args, options) : Nil
       Log.configure options
 
-      lock = Lockfile.from_path LOCK_PATH
+      lock = Lockfile.fetch
       name = args.get! "name"
       mod = lock.modules.find { |m| m.name == name }
       Log.fatal "module '#{name}' not found or is not installed" unless mod

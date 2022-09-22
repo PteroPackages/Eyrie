@@ -63,8 +63,9 @@ module Eyrie
       new version, modules
     end
 
-    def self.from_path(path : String)
-      new YAML.parse File.read(path)
+    def self.fetch
+      raise "eyrie lockfile not found" unless File.exists? "/var/eyrie/module.lock"
+      new YAML.parse File.read("/var/eyrie/module.lock")
     end
 
     def self.default

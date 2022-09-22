@@ -28,7 +28,6 @@ end
 
 module Eyrie
   VERSION = "0.2.0"
-  LOCK_PATH = "/var/eyrie/eyrie.lock"
 
   def self.run : Nil
     app = CLI::Application.new

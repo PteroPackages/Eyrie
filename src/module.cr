@@ -1,5 +1,5 @@
 module Eyrie
-  class Author
+  struct Author
     property name : String?
     property contact : String?
 
