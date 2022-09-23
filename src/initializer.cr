@@ -27,7 +27,10 @@ module Eyrie::Initializer
   end
 
   private def self.run_interactive(path : String) : Nil
-    setup_trap
+    Signal::INT.trap do
+      Log.info "\n\nExiting module setup"
+      exit
+    end
 
     Log.info [
       "Welcome to the Eyrie interactive module setup",
@@ -91,19 +94,7 @@ module Eyrie::Initializer
     end
   end
 
-  private def self.setup_trap : Nil
-    {% if flag?(:win32) %}
-      # not possible yet?
-    {% else %}
-      Signal::INT.trap do
-        Log.info "\n\nExiting module setup"
-        exit
-      end
-    {% end %}
-  end
-
-  private def self.prompt(message : String, *, can_skip : Bool = true,
-                          default : String? = nil, &block : String ->) : Nil
+  private def self.prompt(message : String, *, can_skip : Bool = true, default : String? = nil, & : String ->) : Nil
     loop do
       Log.write message
       input = STDIN.gets || ""
@@ -115,7 +106,7 @@ module Eyrie::Initializer
       end
 
       begin
-        block.call input
+        yield input
         break
       rescue ex
         Log.error ex.message.not_nil!
