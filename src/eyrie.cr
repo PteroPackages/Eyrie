@@ -49,5 +49,5 @@ begin
   Eyrie.run
 rescue ex
   Eyrie::Log.error ex
-  Eyrie::Log.fatal ["", "this may be a bug with Eyrie, please report it to the PteroPackages team"]
+  Eyrie::Log.fatal ["", "This may be a bug with Eyrie, please report it to the PteroPackages team"]
 end

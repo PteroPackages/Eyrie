@@ -45,7 +45,7 @@ module Eyrie
       end
       {% end %}
 
-      @uri += ".git" unless @type.local? && @uri.ends_with?(".git")
+      @uri += ".git" unless @type.local? || @uri.ends_with?(".git")
     end
 
     def self.new(uri, type : String)
@@ -233,7 +233,6 @@ module Eyrie
 
     def validate : Log::Status?
       return Log::Status::INVALID_NAME if @name.matches? /[^a-z0-9_-]+/
-
       return Log::Status::INVALID_SUPPORTS unless @supports.matches? /^[*~<|>=^]*\d+\.\d+\.\d+[*~<|>=^]*$/
       return Log::Status::NO_FILES if @files.includes.empty?
     end
@@ -254,7 +253,11 @@ module Eyrie
           unless @authors.empty?
             yaml.scalar "authors"
             yaml.sequence do
-              @authors.each &.to_yaml yaml
+              @authors.each do |author|
+                yaml.mapping do
+                  author.to_yaml yaml
+                end
+              end
             end
           end
 
@@ -291,7 +294,9 @@ module Eyrie
           end
 
           yaml.scalar "files"
-          @files.to_yaml yaml
+          yaml.mapping do
+            @files.to_yaml yaml
+          end
 
           yaml.scalar "postinstall"
           yaml.sequence do
