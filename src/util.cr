@@ -31,7 +31,7 @@ module Eyrie::Util
         path = "/var/www/jexactyl"
       end
     else
-      Log.fatal "could not locate panel path" unless Dir.exists? root
+      Log.fatal "could not locate panel path" unless Dir.exists? path
     end
 
     Log.fatal "could not locate panel path" if path.empty?

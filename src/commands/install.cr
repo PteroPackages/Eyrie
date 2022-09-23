@@ -3,13 +3,14 @@ module Eyrie::Commands
     def setup : Nil
       @name = "install"
       @description = "Installs a module from a source or module file."
-      @usage << "install <name> [-t|--type <type>] [-v|--verbose] [--version <v>] [options]"
-      @usage << "install <source> [-t|--type <type>] [-v|--verbose] [--version <v>] [options]"
+      @usage << "install <name> [-t|--type <type>] [-v|--verbose] [--version <v>] [-r|--root <dir>] [options]"
+      @usage << "install <source> [-t|--type <type>] [-v|--verbose] [--version <v>] [-r|--root <dir>] [options]"
 
       add_argument "source", required: true
-      add_option "type", short: "t"
+      add_option "type", short: "t", default: "local"
       add_option "verbose", short: "v"
       add_option "version"
+      add_option "root", short: "r"
       set_global_options
     end
 
@@ -22,11 +23,12 @@ module Eyrie::Commands
       ]
 
       Util.run_system_checks
+      root = Util.get_panel_path(options.get("root") || "")
 
       if type == Source::Type::Local
-        Installer.run_local args.get!("source"), options.get!("version")
+        Installer.run_local root, args.get!("source"), options.get!("version")
       else
-        Installer.run args.get!("source"), options.get!("version")
+        Installer.run root, args.get!("source"), options.get!("version")
       end
     end
   end

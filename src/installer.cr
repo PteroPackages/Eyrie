@@ -1,7 +1,5 @@
 module Eyrie::Installer
-  extend self
-
-  def run_local(source : String, version : String) : Nil
+  def self.run_local(root : String, source : String, version : String) : Nil
     path = Path[source].normalize
     path /= "eyrie.yml" if File.directory? path
 
@@ -20,6 +18,14 @@ module Eyrie::Installer
       Log.fatal ex, "failed to validate module '#{mod.name}'"
     end
 
+    install root, mod, version
+  end
+
+  def self.run(root : String, source : String, version : String) : Nil
+  end
+
+  private def self.install(root : String, mod : Module, version : String) : Nil
+    # TODO: fix this
     Log.vinfo "checking version compatibility"
     if (SemanticVersion.parse(version) <=> mod.version) == -1
       Log.fatal [
@@ -28,11 +34,30 @@ module Eyrie::Installer
       ]
     end
 
-    # copy files to cache
-    # install from cache
-    # write to lockfile
-  end
+    if mod.source.not_nil!.type.local?
+      Resolver.pull_from_local mod
+    else
+      Resolver.pull_from_git mod
+    end
 
-  def run(source : String, version : String) : Nil
+    dir = File.join "/var/eyrie/cache", mod.name
+    Dir.cd(dir) do
+      parts, includes = mod.files.includes.partition &.includes? '*'
+      includes += parts.flat_map { |p| Dir.glob(p) } unless parts.empty?
+
+      parts, excludes = mod.files.excludes.partition &.includes? '*'
+      includes += parts.flat_map { |p| Dir.glob(p) } unless parts.empty?
+
+      includes.reject! &.in? excludes
+      includes.reject! { |p| Dir.exists?(p) }
+
+      Log.fatal "no included files were resolved" if includes.empty?
+
+      begin
+        FileUtils.cp includes, root
+      rescue ex
+        Log.fatal ex, "failed to move module files to destination"
+      end
+    end
   end
 end
