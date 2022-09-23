@@ -66,17 +66,32 @@ module Eyrie::Commands
         end
       end
 
+      check("checking lockfile") do |err|
+        return true if File.exists? "/var/eyrie/module.lock"
+        return false if check_only
+
+        begin
+          File.write "/var/eyrie/module.lock", Lockfile.default.to_yaml
+
+          true
+        rescue ex
+          err << "failed to create lockfile" << '\n' << ex
+
+          false
+        end
+      end
+
       check("checking panel directory") do |err|
         return true if Dir.exists? "/var/www/pterodactyl"
         return true if Dir.exists? "/var/www/jexactyl"
 
-        err << "could not locate panel directory"
+        err << "could not locate panel directory" << '\n'
         err << "note that this does not check custom panel locations"
 
         false
       end
 
-      Log.info "completeed checks with #{@errors} error#{"s" if @errors != 1}"
+      Log.info "completed checks with #{@errors} error#{"s" if @errors != 1}"
     end
 
     private def check(info : String, & : IO -> Bool)
