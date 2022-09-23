@@ -12,8 +12,12 @@ module Eyrie::Installer
     mod = Module.from_path path.to_s
     Log.info "found module '#{mod.name}'"
 
-    if st = mod.validate
-      Log.fatal ["failed to validate module '#{mod.name}':"] + Log.get_message(st)
+    begin
+      mod.validate
+    rescue ex : Error
+      Log.fatal ex.format
+    rescue ex
+      Log.fatal ex, "failed to validate module '#{mod.name}'"
     end
 
     Log.vinfo "checking version compatibility"

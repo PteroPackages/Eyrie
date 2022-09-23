@@ -231,10 +231,10 @@ module Eyrie
       )
     end
 
-    def validate : Log::Status?
-      return Log::Status::INVALID_NAME if @name.matches? /[^a-z0-9_-]+/
-      return Log::Status::INVALID_SUPPORTS unless @supports.matches? /^[*~<|>=^]*\d+\.\d+\.\d+[*~<|>=^]*$/
-      return Log::Status::NO_FILES if @files.includes.empty?
+    def validate : Nil
+      raise Error.new(:invalid_name) if @name.matches? /[^a-z0-9_-]+/
+      raise Error.new(:invalid_supports) unless @supports.matches? /^[*~<|>=^]*\d+\.\d+\.\d+[*~<|>=^]*$/
+      raise Error.new(:no_files) if @files.includes.empty?
     end
 
     def to_spec : ModuleSpec

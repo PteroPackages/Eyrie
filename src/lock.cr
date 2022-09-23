@@ -16,11 +16,15 @@ module Eyrie
       new data["name"].as_s, data["version"].as_s, source
     end
 
-    def validate : Log::Status?
-      return :invalid_name if @name.matches? /[^a-z0-9_-]+/
+    def validate : Nil
+      raise Error.new(:invalid_name) if @name.matches? /[^a-z0-9_-]+/
 
       unless @version == "*"
-        SemanticVersion.parse(@version) rescue return :invalid_version
+        begin
+          SemanticVersion.parse @version
+        rescue
+          raise Error.new(:invalid_version)
+        end
       end
     end
 

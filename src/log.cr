@@ -1,13 +1,6 @@
 module Eyrie::Log
   extend self
 
-  enum Status
-    INVALID_NAME
-    INVALID_VERSION
-    INVALID_SUPPORTS
-    NO_FILES
-  end
-
   @@trace = false
   @@verbose = false
   @@warn = true
@@ -17,19 +10,6 @@ module Eyrie::Log
     @@trace = true if options.has? "trace"
     @@verbose = true if options.has? "verbose"
     # @@warn = false if options.has? "no-warn"
-  end
-
-  def get_message(status : Status) : Array(String)
-    case status
-    in Status::INVALID_NAME
-      ["module name is invalid", "module name can only contain letters, numbers, dashes and underscores"]
-    in Status::INVALID_VERSION
-      ["invalid version format", "module versions must be in the major.minor.patch format"]
-    in Status::INVALID_SUPPORTS
-      ["invalid supported version", "supported version must be in the major.minor.patch format"]
-    in Status::NO_FILES
-      ["no files were specified to install with the module", "cannot guess which files to install"]
-    end
   end
 
   def write(args : String) : Nil

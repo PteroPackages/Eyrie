@@ -9,6 +9,7 @@ require "semantic_version"
 require "yaml"
 
 require "./commands/*"
+require "./errors"
 require "./initializer"
 require "./installer"
 require "./lock"
