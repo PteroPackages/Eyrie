@@ -49,12 +49,10 @@ module Eyrie::Installer
       includes += parts.flat_map { |p| Dir.glob(p) } unless parts.empty?
 
       includes.reject! &.in? excludes
-      includes.reject! { |p| Dir.exists?(p) }
-
       Log.fatal "no included files were resolved" if includes.empty?
 
       begin
-        FileUtils.cp includes, root
+        Util.copy_all includes, root
       rescue ex
         Log.fatal ex, "failed to move module files to destination"
       end

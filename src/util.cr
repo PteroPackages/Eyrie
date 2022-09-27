@@ -86,6 +86,17 @@ module Eyrie::Util
   rescue
   end
 
+  def copy_all(srcs : Array(String), dest : String) : Nil
+    Dir.mkdir_p dest unless Dir.exists? dest
+    srcs.each do |src|
+      if File.directory? src
+        Dir.mkdir_p dest unless Dir.exists? dest
+      else
+        File.copy src, dest
+      end
+    end
+  end
+
   def parse_version(value : String) : SemanticVersion
     return SemanticVersion.new(0, 0, 0) if value == "*"
 
