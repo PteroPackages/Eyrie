@@ -26,4 +26,10 @@ module Eyrie
       end
     end
   end
+
+  class SystemExit < Exception
+    def initialize
+      super "system exit"
+    end
+  end
 end

@@ -74,11 +74,11 @@ module Eyrie::Log
 
   def fatal(args : _) : Nil
     error args
-    exit 1
+    raise SystemExit.new
   end
 
   def fatal(ex : Exception, args : _) : Nil
     error ex, args
-    exit 1
+    raise SystemExit.new
   end
 end

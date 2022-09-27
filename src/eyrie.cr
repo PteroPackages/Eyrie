@@ -1,6 +1,4 @@
-{% if flag?(:win32) %}
-  {% raise "cannot run this application on windows systems yet" %}
-{% end %}
+{% raise "cannot run this application on windows systems yet" if flag?(:win32) %}
 
 require "cli"
 require "colorize"
@@ -50,6 +48,7 @@ end
 
 begin
   Eyrie.run
+rescue Eyrie::SystemExit
 rescue ex
   Eyrie::Log.error ex
   Eyrie::Log.fatal ["", "This may be a bug with Eyrie, please report it to the PteroPackages team"]
