@@ -7,7 +7,7 @@
 
 shard.lock
 eyrie.lock
-eyrie.module.yml
+eyrie.yml
 
 *.cmd
 *.dwarf
