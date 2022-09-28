@@ -9,8 +9,8 @@ module Eyrie::Commands
       add_argument "source", required: true
       add_option "type", short: "t", default: "local"
       add_option "verbose", short: "v"
-      add_option "version", default: "*"
-      add_option "root", short: "r"
+      add_option "version", kind: :string, default: "*"
+      add_option "root", short: "r", kind: :string
       set_global_options
     end
 

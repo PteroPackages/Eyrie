@@ -27,10 +27,10 @@ module Eyrie::Installer
   private def self.install(root : String, mod : Module, version : Version) : Nil
     Log.vinfo "checking version compatibility"
 
-    if (version <=> mod.version) == -1
+    unless version.accepts? mod.version
       Log.fatal ["version requirement failed", "expected module version #{version}; got #{mod.version}"]
     end
-    Log.info "installing module version #{mod.version}"
+    Log.info "installing version #{mod.version}"
 
     if mod.source.not_nil!.type.local?
       Resolver.pull_from_local mod

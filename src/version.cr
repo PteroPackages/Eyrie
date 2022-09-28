@@ -4,6 +4,8 @@ module Eyrie
     getter minor : Int32
     getter patch : Int32
 
+    def_equals @major, @minor, @patch
+
     def initialize(@major, @minor, @patch)
     end
 
@@ -37,25 +39,31 @@ module Eyrie
         io << @major
       end
 
-      unless @minor == -1
-        io << '.' << @minor
+      io << '.'
+      if @minor == -1
+        io << 'x'
+        return
+      else
+        io << @minor
       end
 
-      unless @patch == -1
-        io << '.' << @patch
+      io << '.'
+      if @patch == -1
+        io << 'x'
+        return
+      else
+        io << @patch
       end
     end
 
-    def <=>(other : Version) : Int
-      return 0 if @major == -1
+    def accepts?(other : Version) : Bool
+      major = @major == -1 ? other.major : @major
+      minor = @minor == -1 ? other.minor : @minor
+      patch = @patch == -1 ? other.patch : @patch
 
-      i = @major <=> other.major
-      return i unless i.zero?
+      return true if Version.new(major, minor, patch) == other
 
-      i = @minor <=> other.minor
-      return i unless i.zero?
-
-      @patch <=> other.patch
+      (major == -1 || major > other.major) && (minor == -1 || minor > other.minor) && (patch == -1 || patch > other.patch)
     end
   end
 end
