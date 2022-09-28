@@ -32,10 +32,14 @@ module Eyrie::Installer
     end
     Log.info "installing version #{mod.version}"
 
-    if mod.source.not_nil!.type.local?
-      Resolver.pull_from_local mod
-    else
-      Resolver.pull_from_git mod
+    begin
+      if mod.source.not_nil!.type.local?
+        Resolver.pull_from_local mod
+      else
+        Resolver.pull_from_git mod
+      end
+    rescue ex : Error
+      Log.fatal ex.format
     end
 
     dir = File.join "/var/eyrie/cache", mod.name

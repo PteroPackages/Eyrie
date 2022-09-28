@@ -6,15 +6,9 @@ module Eyrie::Resolver
 
   def self.pull_from_git(mod : Module) : Nil
     cache = File.join "/var/eyrie/cache", mod.name
-    count = 0
 
-    loop do
-      if ex = exec "git clone -c core.askPass=true #{mod.source.not_nil!.uri} #{cache}"
-        raise ex if count == 2
-        Log.error ex, "failed to clone git repository"
-        Log.vinfo "retrying..."
-        count += 1
-      end
+    if ex = exec "git clone -c core.askPass=true #{mod.source.not_nil!.uri} #{cache}"
+      raise Error.new ex, :pull_git_failed
     end
   end
 
