@@ -15,7 +15,7 @@ module Eyrie
       super @status.to_s
     end
 
-    def initialize(ex : Exception, status : Status)
+    def initialize(ex : Exception, @status : Status)
       super @status.to_s, cause: ex
     end
 
@@ -29,10 +29,14 @@ module Eyrie
           ["invalid supported version", "supported version must be in the major.minor.patch format"]
         in Status::NO_FILES
           ["no files were specified to install with the module", "cannot guess which files to install"]
+        in Status::PULL_GIT_FAILED
+          ["could not pull module files from git repository"]
+        in Status::PULL_LOCAL_FAILED
+          ["could not pull module files from local file system"]
         end
 
       if ex = cause
-        msg += ex.message.not_nil!
+        msg << "source: " + ex.message.not_nil!
       end
 
       msg
