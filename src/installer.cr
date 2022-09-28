@@ -1,5 +1,5 @@
 module Eyrie::Installer
-  def self.run_local(root : String, source : String, version : String) : Nil
+  def self.run_local(root : String, source : String, version : Version) : Nil
     path = Path[source].normalize
     path /= "eyrie.yml" if File.directory? path
 
@@ -21,18 +21,16 @@ module Eyrie::Installer
     install root, mod, version
   end
 
-  def self.run(root : String, source : String, version : String) : Nil
+  def self.run(root : String, source : String, version : Version) : Nil
   end
 
-  private def self.install(root : String, mod : Module, version : String) : Nil
-    # TODO: fix this
+  private def self.install(root : String, mod : Module, version : Version) : Nil
     Log.vinfo "checking version compatibility"
-    if (SemanticVersion.parse(version) <=> mod.version) == -1
-      Log.fatal [
-        "version requirement failed",
-        "expected module version #{version}; got #{mod.version}"
-      ]
+
+    if (version <=> mod.version) == -1
+      Log.fatal ["version requirement failed", "expected module version #{version}; got #{mod.version}"]
     end
+    Log.info "installing module version #{mod.version}"
 
     if mod.source.not_nil!.type.local?
       Resolver.pull_from_local mod

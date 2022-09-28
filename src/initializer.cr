@@ -54,7 +54,7 @@ module Eyrie::Initializer
 
     prompt("version: (0.0.1) ", default: "0.0.1") do |value|
       begin
-        mod.version = SemanticVersion.parse value
+        mod.version = Version.parse value
       rescue
         raise "invalid version format, must follow semver spec (no requirements)"
       end

@@ -173,7 +173,7 @@ module Eyrie
 
   class Module
     property name : String
-    property version : SemanticVersion
+    property version : Version
     property authors : Array(Author)
     property source : Source?
     property supports : String
@@ -190,7 +190,7 @@ module Eyrie
       raise "missing supported version requirement for module" unless data["supports"]?
       raise "missing file specifications for module" unless data["files"]?
 
-      version = SemanticVersion.parse data["version"].as_s
+      version = Version.parse data["version"].as_s
       authors = if data["authors"]?
         data["authors"].as_a.map { |a| Author.new(a) }
       else
@@ -221,7 +221,7 @@ module Eyrie
     def self.default
       new(
         "module-name",
-        SemanticVersion.new(0, 0, 1),
+        Version.new(0, 0, 1),
         [Author.new("your-name-here", "your@contact.here")],
         Source.new("uri-to-source", :local),
         "",

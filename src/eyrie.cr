@@ -17,6 +17,7 @@ require "./resolver"
 require "./uninstaller"
 require "./upgrader"
 require "./util"
+require "./version"
 
 Colorize.on_tty_only!
 

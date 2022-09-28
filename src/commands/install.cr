@@ -9,7 +9,7 @@ module Eyrie::Commands
       add_argument "source", required: true
       add_option "type", short: "t", default: "local"
       add_option "verbose", short: "v"
-      add_option "version"
+      add_option "version", default: "*"
       add_option "root", short: "r"
       set_global_options
     end
@@ -17,18 +17,19 @@ module Eyrie::Commands
     def execute(args, options) : Nil
       Log.configure options
 
-      type = Source::Type.parse?(args.get!("type")) || Log.fatal [
+      type = Source::Type.parse?(options.get!("type")) || Log.fatal [
         "invalid source type specified",
         "expected: local, git, github, gitlab"
       ]
+      version = Version.parse options.get!("version")
 
       Util.run_system_checks
       root = Util.get_panel_path(options.get("root") || "")
 
       if type == Source::Type::Local
-        Installer.run_local root, args.get!("source"), options.get!("version")
+        Installer.run_local root, args.get!("source"), version
       else
-        Installer.run root, args.get!("source"), options.get!("version")
+        Installer.run root, args.get!("source"), version
       end
     end
   end
