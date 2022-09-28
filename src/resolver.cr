@@ -16,7 +16,7 @@ module Eyrie::Resolver
     Log.vinfo command
     err = IO::Memory.new
     Process.run command, shell: true, error: err
-    unless (msg = err.to_s).empty?
+    if (msg = err.to_s).includes? "fatal"
       Exception.new msg.lines.last
     end
   rescue ex
