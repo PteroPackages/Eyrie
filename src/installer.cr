@@ -59,5 +59,87 @@ module Eyrie::Installer
         Log.fatal ex, "failed to move module files to destination"
       end
     end
+
+    if deps = mod.deps.install
+      install_dependencies deps, root
+    end
+
+    if deps = mod.deps.remove
+      remove_dependencies deps, root
+    end
+  end
+
+  private def self.install_dependencies(deps : CmdDepSpec, root : String) : Nil
+    if composer = deps.composer
+      unless Process.find_executable "composer"
+        Log.error "cannot install php dependencies without composer"
+        return
+      end
+
+      composer.each do |name, version|
+        Log.info "installing dependency '#{name}'"
+        dep = name + (version == "*" ? "" : ":#{version}")
+
+        if ex = exec "composer require #{dep}", root
+          Log.error ex, "failed to install composer dependency '#{name}'"
+        end
+      end
+    end
+
+    if npm = deps.npm
+      unless Process.find_executable "npm"
+        Log.error "cannot install node dependencies without npm"
+        return
+      end
+
+      npm.each do |name, version|
+        Log.info "installing dependency '#{name}'"
+        dep = name + (version == "*" ? "" : ":#{version}")
+
+        if ex = exec "npm install #{dep}", root
+          Log.error ex, "failed to install npm dependency '#{name}'"
+        end
+      end
+    end
+  end
+
+  private def self.remove_dependencies(deps : CmdDepSpec, root : String) : Nil
+    if composer = deps.composer
+      unless Process.find_executable "composer"
+        Log.error "cannot remove php dependencies without composer"
+        return
+      end
+
+      composer.keys.each do |name|
+        Log.info "removing dependency '#{name}'"
+        if ex = exec "composer remove #{name}", root
+          Log.error ex, "failed to remove composer dependency '#{name}'"
+        end
+      end
+    end
+
+    if npm = deps.npm
+      unless Process.find_executable "npm"
+        Log.error "cannot remove node dependencies without npm"
+        return
+      end
+
+      npm.keys.each do |name|
+        Log.info "removing dependency '#{name}'"
+        if ex = exec "npm uninstall #{name}", root
+          Log.error ex, "failed to remove npm dependency '#{name}'"
+        end
+      end
+    end
+  end
+
+  private def self.exec(command : String, root : String) : Exception?
+    err = IO::Memory.new
+    Process.run command, shell: true, error: err, chdir: root
+    unless (msg = err.to_s).empty?
+      Exception.new msg.lines.first
+    end
+  rescue ex
+    ex
   end
 end
