@@ -25,12 +25,13 @@ module Eyrie::Commands
 
       Util.run_system_checks
       root = Util.get_panel_path options.get!("root")
+      ver = Util.get_panel_version root
 
       taken = Time.measure do
         if type == Source::Type::Local
-          Installer.run_local root, args.get!("source"), version
+          Installer.run_local root, args.get!("source"), version, ver
         else
-          Installer.run root, args.get!("source"), version
+          Installer.run root, args.get!("source"), version, ver
         end
       end
 

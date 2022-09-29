@@ -232,9 +232,10 @@ module Eyrie
       )
     end
 
-    def validate : Nil
+    def validate(ver : SemanticVersion) : Nil
       raise Error.new(:invalid_name) if @name.matches? /[^a-z0-9_-]+/
       raise Error.new(:invalid_supports) unless @supports.matches? /^[*~<|>=^]*\d+\.\d+\.\d+[*~<|>=^]*$/
+      raise Error.new(:cannot_support) unless SemanticCompare.simple_expression ver, @supports
       raise Error.new(:no_files) if @files.includes.empty?
     end
 

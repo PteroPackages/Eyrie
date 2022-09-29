@@ -1,5 +1,5 @@
 module Eyrie::Installer
-  def self.run_local(root : String, source : String, version : Version) : Nil
+  def self.run_local(root : String, source : String, version : Version, ver : SemanticVersion) : Nil
     path = Path[source].normalize
     path /= "eyrie.yml" if File.directory? path
 
@@ -12,9 +12,13 @@ module Eyrie::Installer
     Log.vinfo "validating module..."
 
     begin
-      mod.validate
+      mod.validate ver
     rescue ex : Error
-      Log.fatal ex.format
+      if ex.status.cannot_support?
+        Log.fatal ex.format + ["current version #{ver} does not satisfy requirement #{mod.supports}"]
+      else
+        Log.fatal ex.format
+      end
     rescue ex
       Log.fatal ex, "Failed to validate module '#{mod.name}'"
     end
@@ -22,7 +26,7 @@ module Eyrie::Installer
     install root, mod, version
   end
 
-  def self.run(root : String, source : String, version : Version) : Nil
+  def self.run(root : String, source : String, version : Version, ver : SemanticVersion) : Nil
   end
 
   private def self.install(root : String, mod : Module, version : Version) : Nil

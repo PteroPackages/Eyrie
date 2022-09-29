@@ -34,16 +34,14 @@ module Eyrie::Util
       Log.fatal "could not locate panel path" unless Dir.exists? path
     end
 
-    Log.fatal "could not locate panel path" if path.empty?
-
     path + (path.ends_with?('/') ? "" : '/')
   end
 
-  def get_panel_version(path : String) : String
-    path = File.join path, "config", "app.php"
+  def get_panel_version(path : String) : SemanticVersion
+    path = File.join(path, "config", "app.php")
     Log.fatal [
-      "panel 'app.php' config file not found",
-      "this file is required for installing modules"
+      "could not find the panel config file",
+      "make sure you have installed your panel correctly then retry"
     ] unless File.exists? path
 
     data = File.read path
@@ -58,7 +56,11 @@ module Eyrie::Util
       "please install an official version of the panel to use this application"
     ] if $1 == "canary"
 
-    $1
+    begin
+      SemanticVersion.parse $1
+    rescue
+      Log.fatal "panel version is invalid (must follow semver spec)"
+    end
   end
 
   def clear_cache_dir : Nil

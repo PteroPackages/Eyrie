@@ -4,6 +4,7 @@ module Eyrie
       INVALID_NAME
       INVALID_VERSION
       INVALID_SUPPORTS
+      CANNOT_SUPPORT
       NO_FILES
       PULL_GIT_FAILED
       PULL_LOCAL_FAILED
@@ -27,6 +28,8 @@ module Eyrie
           ["invalid version format", "module versions must be in the major.minor.patch format"]
         in Status::INVALID_SUPPORTS
           ["invalid supported version", "supported version must be in the major.minor.patch format"]
+        in Status::CANNOT_SUPPORT
+          ["this module cannot support the current panel version"]
         in Status::NO_FILES
           ["no files were specified to install with the module", "cannot guess which files to install"]
         in Status::PULL_GIT_FAILED
@@ -44,8 +47,5 @@ module Eyrie
   end
 
   class SystemExit < Exception
-    def initialize
-      super "system exit"
-    end
   end
 end
