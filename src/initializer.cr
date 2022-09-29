@@ -16,7 +16,8 @@ module Eyrie::Initializer
     end
 
     begin
-      File.write mod_path, Module.default.to_yaml
+      tmpl = ECR.render "src/module.ecr"
+      File.write mod_path, tmpl
       Log.info "Created module file at:\n#{mod_path}"
     rescue ex
       Log.error ex, "Failed to write to module file"

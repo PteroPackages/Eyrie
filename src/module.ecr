@@ -1,0 +1,59 @@
+# The name of your module
+name: module-name
+
+# The version of your module
+version: 0.0.1
+
+# A list of authors or contributors to this module that people can contact
+authors:
+- name: your-name-here
+  contact: your@contact.here
+
+# The file or URL source to your module files
+# If you are installing a local module, set "uri" to the directory path of your files
+# and set "type" to "local". Otherwise, set "uri" to your URL and "type" to its source.
+#
+# Supported types:
+# - Local
+# - Git (any)
+# - Github
+# - Gitlab
+source:
+  uri: uri-to-source
+  type: Local
+
+# The panel version your module supports
+# This allows using full semver version restrictions (e.g. <=, =>, ~>, ^)
+supports: # ^1.10.1
+
+# Additional dependency requirements for your module
+# This currently only supports installing/removing with composer and npm dependencies
+dependencies:
+  install:
+    composer:
+      # specify the dependency name and its version to install ("*" works for any/latest version)
+      symfony/yaml: ^6.4
+
+    # npm:
+    #   eslint: latest
+
+  remove:
+    npm:
+      # specify the dependency name (version is ignored)
+      prettier: "*"
+
+    # Don't do this...
+    # composer:
+    #   php: 8.1
+
+# The module files specifications (supports glob pattern matching)
+files:
+  # files that should be included when installing or removed when uninstalling
+  include:
+  - resources/scripts/**/*
+
+  # files that should be excluded when installing or removed when uninstalling
+  exclude:
+  - resources/scripts/__mocks__/*
+
+postinstall: []

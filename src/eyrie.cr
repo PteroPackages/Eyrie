@@ -2,6 +2,7 @@
 
 require "cli"
 require "colorize"
+require "ecr/macros"
 require "semantic_compare"
 require "semantic_version"
 require "yaml"
