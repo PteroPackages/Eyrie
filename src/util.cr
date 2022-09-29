@@ -26,9 +26,9 @@ module Eyrie::Util
   def get_panel_path(path : String) : String
     if path.empty?
       if Dir.exists? "/var/www/pterodactyl"
-        path = "/var/www/pterodactyl"
+        path = "/var/www/pterodactyl/"
       elsif Dir.exists? "/var/www/jexactyl"
-        path = "/var/www/jexactyl"
+        path = "/var/www/jexactyl/"
       end
     else
       Log.fatal "could not locate panel path" unless Dir.exists? path
@@ -36,7 +36,7 @@ module Eyrie::Util
 
     Log.fatal "could not locate panel path" if path.empty?
 
-    path
+    path + (path.ends_with?('/') ? "" : '/')
   end
 
   def get_panel_version(path : String) : String
@@ -86,24 +86,13 @@ module Eyrie::Util
   rescue
   end
 
-  def copy_all(srcs : Array(String), dest : String) : Nil
-    Dir.mkdir_p dest unless Dir.exists? dest
+  def copy(srcs : Array(String), dest : String) : Nil
     srcs.each do |src|
       if File.directory? src
-        Dir.mkdir_p dest unless Dir.exists? dest
+        Dir.mkdir_p File.join(dest, src)
       else
-        File.copy src, dest
+        File.copy src, File.join(dest, src)
       end
     end
-  end
-
-  def parse_version(value : String) : SemanticVersion
-    return SemanticVersion.new(0, 0, 0) if value == "*"
-
-    value =~ %r[\d+(\.\d+)?(\.\d+)?]
-    value += ".0" unless $1?
-    value += ".0" unless $2?
-
-    SemanticVersion.parse value
   end
 end

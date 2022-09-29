@@ -54,7 +54,7 @@ module Eyrie::Installer
       Log.fatal "no included files were resolved" if includes.empty?
 
       begin
-        Util.copy_all includes, root
+        Util.copy includes, root
       rescue ex
         Log.fatal ex, "failed to move module files to destination"
       end
