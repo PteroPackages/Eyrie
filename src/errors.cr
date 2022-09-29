@@ -36,7 +36,7 @@ module Eyrie
         end
 
       if ex = cause
-        msg << "source: " + ex.message.not_nil!
+        msg << ex.message.not_nil!
       end
 
       msg

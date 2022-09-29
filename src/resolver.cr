@@ -13,7 +13,8 @@ module Eyrie::Resolver
   end
 
   private def self.exec(command : String) : Exception?
-    Log.vinfo command
+    Log.vinfo "exec: " + command
+
     err = IO::Memory.new
     Process.run command, shell: true, error: err
     if (msg = err.to_s).includes? "fatal"

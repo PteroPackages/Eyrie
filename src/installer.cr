@@ -4,18 +4,19 @@ module Eyrie::Installer
     path /= "eyrie.yml" if File.directory? path
 
     unless File.exists? path
-      Log.fatal "no eyrie.yml file found for local module"
+      Log.fatal "No eyrie.yml file found for local module"
     end
 
     mod = Module.from_path path.to_s
-    Log.info "found module '#{mod.name}'"
+    Log.info "Found module '#{mod.name}'"
+    Log.vinfo "validating module..."
 
     begin
       mod.validate
     rescue ex : Error
       Log.fatal ex.format
     rescue ex
-      Log.fatal ex, "failed to validate module '#{mod.name}'"
+      Log.fatal ex, "Failed to validate module '#{mod.name}'"
     end
 
     install root, mod, version
@@ -28,9 +29,10 @@ module Eyrie::Installer
     Log.vinfo "checking version compatibility"
 
     unless version.accepts? mod.version
-      Log.fatal ["version requirement failed", "expected module version #{version}; got #{mod.version}"]
+      Log.fatal ["Version requirement failed", "Expected module version #{version}; got #{mod.version}"]
     end
-    Log.info "installing version #{mod.version}"
+
+    Log.info ["Installing version #{mod.version}", "Resolving #{mod.source.not_nil!.type} sources..."]
 
     begin
       if mod.source.not_nil!.type.local?
@@ -44,6 +46,8 @@ module Eyrie::Installer
 
     dir = File.join "/var/eyrie/cache", mod.name
     Dir.cd(dir) do
+      Log.vinfo "collecting included and excluded files"
+
       parts, includes = mod.files.includes.partition &.includes? '*'
       includes += parts.flat_map { |p| Dir.glob(p) } unless parts.empty?
 
@@ -51,12 +55,15 @@ module Eyrie::Installer
       includes += parts.flat_map { |p| Dir.glob(p) } unless parts.empty?
 
       includes.reject! &.in? excludes
-      Log.fatal "no included files were resolved" if includes.empty?
+      Log.fatal "No included files were resolved" if includes.empty?
+
+      Log.info "Moving module files into panel..."
+      Log.vinfo ["source: #{dir}", "destination: #{root}"]
 
       begin
         Util.copy includes, root
       rescue ex
-        Log.fatal ex, "failed to move module files to destination"
+        Log.fatal ex, "Failed to move module files to destination"
       end
     end
 
@@ -71,33 +78,35 @@ module Eyrie::Installer
 
   private def self.install_dependencies(deps : CmdDepSpec, root : String) : Nil
     if composer = deps.composer
+      Log.info "Checking composer install dependencies..."
       unless Process.find_executable "composer"
-        Log.error "cannot install php dependencies without composer"
+        Log.error "Cannot install php dependencies without composer"
         return
       end
 
       composer.each do |name, version|
-        Log.info "installing dependency '#{name}'"
+        Log.info "Installing dependency '#{name}'"
         dep = name + (version == "*" ? "" : ":#{version}")
 
         if ex = exec "composer require #{dep}", root
-          Log.error ex, "failed to install composer dependency '#{name}'"
+          Log.error ex, "Failed to install composer dependency '#{name}'"
         end
       end
     end
 
     if npm = deps.npm
+      Log.info "Checking npm install dependencies..."
       unless Process.find_executable "npm"
-        Log.error "cannot install node dependencies without npm"
+        Log.error "Cannot install node dependencies without npm"
         return
       end
 
       npm.each do |name, version|
-        Log.info "installing dependency '#{name}'"
+        Log.info "Installing dependency '#{name}'"
         dep = name + (version == "*" ? "" : ":#{version}")
 
         if ex = exec "npm install #{dep}", root
-          Log.error ex, "failed to install npm dependency '#{name}'"
+          Log.error ex, "Failed to install npm dependency '#{name}'"
         end
       end
     end
@@ -105,35 +114,39 @@ module Eyrie::Installer
 
   private def self.remove_dependencies(deps : CmdDepSpec, root : String) : Nil
     if composer = deps.composer
+      Log.info "Checking composer remove dependencies..."
       unless Process.find_executable "composer"
-        Log.error "cannot remove php dependencies without composer"
+        Log.error "Cannot remove php dependencies without composer"
         return
       end
 
       composer.keys.each do |name|
-        Log.info "removing dependency '#{name}'"
+        Log.info "Removing dependency '#{name}'"
         if ex = exec "composer remove #{name}", root
-          Log.error ex, "failed to remove composer dependency '#{name}'"
+          Log.error ex, "Failed to remove composer dependency '#{name}'"
         end
       end
     end
 
     if npm = deps.npm
+      Log.info "Checking npm remove dependencies..."
       unless Process.find_executable "npm"
-        Log.error "cannot remove node dependencies without npm"
+        Log.error "Cannot remove node dependencies without npm"
         return
       end
 
       npm.keys.each do |name|
-        Log.info "removing dependency '#{name}'"
+        Log.info "Removing dependency '#{name}'"
         if ex = exec "npm uninstall #{name}", root
-          Log.error ex, "failed to remove npm dependency '#{name}'"
+          Log.error ex, "Failed to remove npm dependency '#{name}'"
         end
       end
     end
   end
 
   private def self.exec(command : String, root : String) : Exception?
+    Log.vinfo "exec: " + command
+
     err = IO::Memory.new
     Process.run command, shell: true, error: err, chdir: root
     unless (msg = err.to_s).empty?

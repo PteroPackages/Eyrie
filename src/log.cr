@@ -3,13 +3,11 @@ module Eyrie::Log
 
   @@trace = false
   @@verbose = false
-  @@warn = true
 
   def configure(options : CLI::OptionsInput) : Nil
     Colorize.enabled = false if options.has? "no-color"
     @@trace = true if options.has? "trace"
     @@verbose = true if options.has? "verbose"
-    # @@warn = false if options.has? "no-warn"
   end
 
   def write(args : String) : Nil
@@ -29,7 +27,6 @@ module Eyrie::Log
   end
 
   def warn(args : String) : Nil
-    return unless @@warn
     STDOUT.puts %(#{"warn".colorize(:yellow)}: #{args})
   end
 
@@ -48,7 +45,7 @@ module Eyrie::Log
   end
 
   def vwarn(ex : Exception) : Nil
-    return unless @@verbose && @@warn
+    return unless @@verbose
     warn ex.message || "an unknown error occured"
     ex.backtrace.each { |t| warn t } if @@trace
   end

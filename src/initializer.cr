@@ -3,7 +3,7 @@ module Eyrie::Initializer
     mod_path = File.join Dir.current, "eyrie.yml"
 
     if File.exists?(mod_path) && !force
-      Log.error "module file already exists in this directory"
+      Log.error ["Module file already exists in this directory", "Run with the '--force' flag to overwrite"]
       return
     end
 
@@ -11,18 +11,15 @@ module Eyrie::Initializer
       if STDIN.tty? && !STDIN.closed?
         return run_interactive mod_path
       else
-        Log.warn [
-          "stdin input is not supported by this terminal",
-          "skipping interactive module setup"
-        ]
+        Log.warn ["Stdin input is not supported by this terminal", "Skipping interactive module setup"]
       end
     end
 
     begin
       File.write mod_path, Module.default.to_yaml
-      Log.info "created module file at:\n#{mod_path}"
+      Log.info "Created module file at:\n#{mod_path}"
     rescue ex
-      Log.error ex, "failed to write to module file"
+      Log.error ex, "Failed to write to module file"
     end
   end
 
@@ -56,7 +53,7 @@ module Eyrie::Initializer
       begin
         mod.version = Version.parse value
       rescue
-        raise "invalid version format, must follow semver spec (no requirements)"
+        raise "Invalid version format, must follow semver spec 'major.minor.patch' (no requirements)"
       end
     end
 
@@ -70,14 +67,14 @@ module Eyrie::Initializer
       when .includes? "gitlab" then source.type = :gitlab
       when .includes? "git"    then next # default is git
       else
-        Log.info "assuming source type is local (you can change this after)"
+        Log.info "Assuming source type is local (you can change this after)"
         source.type = :local
       end
     end
 
     prompt("supports: ", can_skip: false) do |value|
       unless value.matches? /[*~<|>=^]*\d+\.\d+\.\d+[*~<|>=^]*/
-        raise "invalid version format, must follow semver spec"
+        raise "Invalid version format, must follow semver spec 'major.minor.patch' (requirements allowed)"
       end
 
       mod.supports = value
@@ -88,9 +85,9 @@ module Eyrie::Initializer
 
     begin
       File.write path, mod.to_yaml
-      Log.info "\ncreated module file at:\n#{path}"
+      Log.info "\nCreated module file at:\n#{path}"
     rescue ex
-      Log.error ex, "failed to write to module file"
+      Log.error ex, "Failed to write to module file"
     end
   end
 
@@ -102,7 +99,7 @@ module Eyrie::Initializer
 
       if input.empty?
         break if can_skip
-        next Log.error "cannot accept empty value"
+        next Log.error "Cannot accept empty value"
       end
 
       begin

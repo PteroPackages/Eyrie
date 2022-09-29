@@ -7,10 +7,10 @@ module Eyrie::Commands
       @usage << "install <source> [-t|--type <type>] [-v|--verbose] [--version <v>] [-r|--root <dir>] [options]"
 
       add_argument "source", required: true
-      add_option "type", short: "t", default: "local"
+      add_option "type", short: "t", kind: :string, default: "local"
       add_option "verbose", short: "v"
       add_option "version", kind: :string, default: "*"
-      add_option "root", short: "r", kind: :string
+      add_option "root", short: "r", kind: :string, default: ""
       set_global_options
     end
 
@@ -18,19 +18,25 @@ module Eyrie::Commands
       Log.configure options
 
       type = Source::Type.parse?(options.get!("type")) || Log.fatal [
-        "invalid source type specified",
-        "expected: local, git, github, gitlab"
+        "Invalid module source type specified",
+        "Expected: local, git, github, gitlab"
       ]
       version = Version.parse options.get!("version")
 
       Util.run_system_checks
-      root = Util.get_panel_path(options.get("root") || "")
+      root = Util.get_panel_path options.get!("root")
 
-      if type == Source::Type::Local
-        Installer.run_local root, args.get!("source"), version
-      else
-        Installer.run root, args.get!("source"), version
+      taken = Time.measure do
+        if type == Source::Type::Local
+          Installer.run_local root, args.get!("source"), version
+        else
+          Installer.run root, args.get!("source"), version
+        end
       end
+
+      Log.info "Installed module in #{taken.milliseconds}ms"
+    ensure
+      Util.clear_cache_dir
     end
   end
 end
