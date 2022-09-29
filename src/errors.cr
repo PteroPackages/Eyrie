@@ -23,19 +23,19 @@ module Eyrie
     def format : Array(String)
       msg = case @status
         in Status::INVALID_NAME
-          ["module name is invalid", "module name can only contain letters, numbers, dashes and underscores"]
+          ["Module name is invalid", "Module name can only contain letters, numbers, dashes and underscores"]
         in Status::INVALID_VERSION
-          ["invalid version format", "module versions must be in the major.minor.patch format"]
+          ["Invalid version format", "Module versions must be in the major.minor.patch format"]
         in Status::INVALID_SUPPORTS
-          ["invalid supported version", "supported version must be in the major.minor.patch format"]
+          ["Invalid supported version", "Supported version must be in the major.minor.patch format"]
         in Status::CANNOT_SUPPORT
-          ["this module cannot support the current panel version"]
+          ["This module cannot support the current panel version"]
         in Status::NO_FILES
-          ["no files were specified to install with the module", "cannot guess which files to install"]
+          ["No files were specified to install with the module", "Cannot guess which files to install"]
         in Status::PULL_GIT_FAILED
-          ["could not pull module files from git repository"]
+          ["Could not pull module files from git repository"]
         in Status::PULL_LOCAL_FAILED
-          ["could not pull module files from local file system"]
+          ["Could not pull module files from local file system"]
         end
 
       if ex = cause

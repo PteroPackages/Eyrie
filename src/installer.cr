@@ -15,7 +15,7 @@ module Eyrie::Installer
       mod.validate ver
     rescue ex : Error
       if ex.status.cannot_support?
-        Log.fatal ex.format + ["current version #{ver} does not satisfy requirement #{mod.supports}"]
+        Log.fatal ex.format + ["Current version #{ver} does not satisfy requirement #{mod.supports}"]
       else
         Log.fatal ex.format
       end
