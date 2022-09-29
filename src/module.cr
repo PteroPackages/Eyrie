@@ -175,7 +175,7 @@ module Eyrie
     property name : String
     property version : Version
     property authors : Array(Author)
-    property source : Source?
+    property source : Source
     property supports : String
     property deps : Deps
     property files : Files
@@ -187,6 +187,7 @@ module Eyrie
     def self.new(data : YAML::Any)
       raise "missing name field for module" unless data["name"]?
       raise "missing version field for module" unless data["version"]?
+      raise "missing source field for module" unless data["source"]?
       raise "missing supported version requirement for module" unless data["supports"]?
       raise "missing file specifications for module" unless data["files"]?
 
@@ -197,7 +198,7 @@ module Eyrie
         [] of Author
       end
 
-      source = data["source"]?.try { |s| Source.new(s) }
+      source = Source.new data["source"]
       deps = data["dependencies"]?.try { |d| Deps.new(d) } || Deps.new(nil, nil)
       files = Files.new data["files"]
       scripts = data["postinstall"]?.try(&.as_a.map(&.as_s)) || [] of String
@@ -238,7 +239,7 @@ module Eyrie
     end
 
     def to_spec : ModuleSpec
-      ModuleSpec.new @name, @version, @source || Source.new("", :local)
+      ModuleSpec.new @name, @version, @source
     end
 
     def to_yaml : String
@@ -261,14 +262,12 @@ module Eyrie
             end
           end
 
-          if src = @source
-            yaml.scalar "source"
-            yaml.mapping do
-              yaml.scalar "uri"
-              yaml.scalar src.uri
-              yaml.scalar "type"
-              yaml.scalar src.type
-            end
+          yaml.scalar "source"
+          yaml.mapping do
+            yaml.scalar "uri"
+            yaml.scalar @source.uri
+            yaml.scalar "type"
+            yaml.scalar @source.type
           end
 
           yaml.scalar "supports"

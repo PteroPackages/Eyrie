@@ -32,10 +32,10 @@ module Eyrie::Installer
       Log.fatal ["Version requirement failed", "Expected module version #{version}; got #{mod.version}"]
     end
 
-    Log.info ["Installing version #{mod.version}", "Resolving #{mod.source.not_nil!.type} sources..."]
+    Log.info ["Installing version #{mod.version}", "Resolving #{mod.source.type} sources..."]
 
     begin
-      if mod.source.not_nil!.type.local?
+      if mod.source.type.local?
         Resolver.pull_from_local mod
       else
         Resolver.pull_from_git mod
@@ -58,7 +58,11 @@ module Eyrie::Installer
       Log.fatal "No included files were resolved" if includes.empty?
 
       Log.info "Moving module files into panel..."
-      Log.vinfo ["source: #{dir}", "destination: #{root}"]
+      Log.vinfo [
+        "included #{includes.size} files, excluded #{excludes.size} files",
+        "source: #{dir}",
+        "destination: #{root}"
+      ]
 
       begin
         Util.copy includes, root
