@@ -19,10 +19,8 @@ module Eyrie::Commands
 
         mod.format STDOUT
       else
-        lock.get_saved.each &.format(STDOUT)
+        Log.info lock.get_saved.map { |m| "#{m.name}:#{m.version}" }
       end
-    rescue ex
-      Log.fatal ex
     end
   end
 end
