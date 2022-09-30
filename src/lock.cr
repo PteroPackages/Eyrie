@@ -1,7 +1,7 @@
 module Eyrie
   class ModuleSpec
     getter name : String
-    getter version : String
+    getter version : Version
     getter source : Source
 
     def initialize(@name, @version, @source)
@@ -12,23 +12,9 @@ module Eyrie
       raise "missing version for module spec" unless data["version"]?
       raise "missing source info for module spec" unless data["source"]?
 
+      version = Version.parse data["version"].as_s
       source = Source.new data["source"]
-      new data["name"].as_s, data["version"].as_s, source
-    end
-
-    def validate : Nil
-      raise Error.new(:invalid_name) if @name.matches? /[^a-z0-9_-]+/
-
-      unless @version == "*"
-        begin
-          SemanticVersion.parse @version
-        rescue
-          raise Error.new(:invalid_version)
-        end
-      end
-    end
-
-    def format(io : IO) : Nil
+      new data["name"].as_s, version, source
     end
 
     def to_yaml(yaml : YAML::Builder) : Nil
@@ -74,6 +60,15 @@ module Eyrie
 
     def self.default
       new 1, [] of ModuleSpec
+    end
+
+    def get_saved : Array(Module)
+      Dir
+        .children("/var/eyrie/save")
+        .select(&.ends_with?(".save.yml"))
+        .map do |name|
+          Module.from_path File.join("/var/eyrie/save", name)
+        end
     end
 
     def to_yaml : String

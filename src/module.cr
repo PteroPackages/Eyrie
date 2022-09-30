@@ -239,6 +239,29 @@ module Eyrie
       raise Error.new(:no_files) if @files.includes.empty?
     end
 
+    def format(io : IO) : Nil
+      authors = if @authors.empty?
+        "none set"
+      else
+        @authors
+          .select(&.name)
+          .map { |a| %(- #{a.name}#{" <#{a.contact}>" if a.contact}) }
+          .join('\n')
+      end
+
+      io << <<-FMT
+      name:     #{@name}
+      version:  #{@version}
+      authors:  #{authors}
+
+      source:   #{@source.uri}
+      type:     #{@source.type}
+
+      supports: #{@supports}
+
+      FMT
+    end
+
     def to_spec : ModuleSpec
       ModuleSpec.new @name, @version, @source
     end

@@ -14,12 +14,12 @@ module Eyrie::Commands
 
       lock = Lockfile.fetch
       if name = options.get "name"
-        mod = lock.modules.find { |m| m.name == name }
-        Log.fatal "module '#{name}' not found or is not installed" unless mod
+        mod = lock.get_saved.find { |m| m.name == name }
+        Log.fatal "Module '#{name}' not found or is not installed" unless mod
 
         mod.format STDOUT
       else
-        lock.modules.each &.format(STDOUT)
+        lock.get_saved.each &.format(STDOUT)
       end
     rescue ex
       Log.fatal ex
