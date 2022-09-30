@@ -71,6 +71,22 @@ module Eyrie
         end
     end
 
+    def save : Nil
+      File.write "/var/eyrie/module.lock", to_yaml
+    end
+
+    def save(mod : Module) : Nil
+      return if @modules.find { |m| m.name == mod.name }
+      begin
+        File.write File.join("/var/eyrie/save", mod.name + ".save.yml"), mod.to_yaml
+      rescue ex
+        Log.warn ex, "Failed to save module"
+      end
+
+      @modules << mod.to_spec
+      File.write "/var/eyrie/module.lock", to_yaml
+    end
+
     def to_yaml : String
       YAML.build do |yaml|
         yaml.mapping do

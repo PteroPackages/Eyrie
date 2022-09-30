@@ -30,6 +30,7 @@ module Eyrie::Installer
   end
 
   private def self.install(root : String, mod : Module, version : Version) : Nil
+    lock = Lockfile.fetch
     Log.vinfo "checking version compatibility"
 
     unless version.accepts? mod.version
@@ -82,6 +83,9 @@ module Eyrie::Installer
     if deps = mod.deps.remove
       remove_dependencies deps, root
     end
+
+    Log.info "Saving to lockfile..."
+    lock.save mod
   end
 
   private def self.install_dependencies(deps : CmdDepSpec, root : String) : Nil

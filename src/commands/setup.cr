@@ -71,7 +71,7 @@ module Eyrie::Commands
         next false if check_only
 
         begin
-          File.write "/var/eyrie/module.lock", Lockfile.default.to_yaml
+          Lockfile.default.save
 
           true
         rescue ex
