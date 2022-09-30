@@ -1,5 +1,7 @@
 module Eyrie::Commands
   class UpgradeCommand < CLI::Command
+    include Base
+
     def setup : Nil
       @name = "upgrade"
       @description = "Upgrades installed modules by name or that are installed."

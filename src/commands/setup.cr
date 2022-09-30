@@ -1,5 +1,7 @@
 module Eyrie::Commands
   class SetupCommand < CLI::Command
+    include Base
+
     def initialize(app)
       @errors = 0
 

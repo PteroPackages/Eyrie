@@ -1,5 +1,7 @@
 module Eyrie::Commands
   class RootCommand < CLI::Command
+    include Base
+
     def self.help_template : String
       <<-HELP
       Pterodactyl Module Manager (addons and themes)

@@ -1,5 +1,7 @@
 module Eyrie::Commands
   class InitCommand < CLI::Command
+    include Base
+
     def setup : Nil
       @name = "init"
       @description = "Initializes a module file in the current directory."

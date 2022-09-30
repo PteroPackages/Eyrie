@@ -1,5 +1,7 @@
 module Eyrie::Commands
   class ListCommand < CLI::Command
+    include Base
+
     def setup : Nil
       @name = "list"
       @description = "Lists all installed modules and gets information on a specific module."

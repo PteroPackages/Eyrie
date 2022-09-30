@@ -1,5 +1,7 @@
 module Eyrie::Commands
   class UninstallCommand < CLI::Command
+    include Base
+
     def setup : Nil
       @name = "uninstall"
       @description = "Uninstalls a specified module from the panel."

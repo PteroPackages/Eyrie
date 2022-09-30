@@ -1,5 +1,7 @@
 module Eyrie::Commands
   class InstallCommand < CLI::Command
+    include Base
+
     def setup : Nil
       @name = "install"
       @description = "Installs a module from a source or module file."
