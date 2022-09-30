@@ -22,8 +22,8 @@ module Eyrie::Commands
       check_only = options.has? "check"
 
       check("checking main directory") do |err|
-        return true if Dir.exists? "/var/eyrie"
-        return false if check_only
+        next true if Dir.exists? "/var/eyrie"
+        next false if check_only
 
         begin
           Dir.mkdir "/var/eyrie"
@@ -37,8 +37,8 @@ module Eyrie::Commands
       end
 
       check("checking cache directory") do |err|
-        return true if Dir.exists? "/var/eyrie/cache"
-        return false if check_only
+        next true if Dir.exists? "/var/eyrie/cache"
+        next false if check_only
 
         begin
           Dir.mkdir "/var/eyrie/cache"
@@ -52,8 +52,8 @@ module Eyrie::Commands
       end
 
       check("checking save directory") do |err|
-        return true if Dir.exists? "/var/eyrie/save"
-        return false if check_only
+        next true if Dir.exists? "/var/eyrie/save"
+        next false if check_only
 
         begin
           Dir.mkdir "/var/eyrie/save"
@@ -67,8 +67,8 @@ module Eyrie::Commands
       end
 
       check("checking lockfile") do |err|
-        return true if File.exists? "/var/eyrie/module.lock"
-        return false if check_only
+        next true if File.exists? "/var/eyrie/module.lock"
+        next false if check_only
 
         begin
           File.write "/var/eyrie/module.lock", Lockfile.default.to_yaml
@@ -82,8 +82,8 @@ module Eyrie::Commands
       end
 
       check("checking panel directory") do |err|
-        return true if Dir.exists? "/var/www/pterodactyl"
-        return true if Dir.exists? "/var/www/jexactyl"
+        next true if Dir.exists? "/var/www/pterodactyl"
+        next true if Dir.exists? "/var/www/jexactyl"
 
         err << "could not locate panel directory" << '\n'
         err << "note that this does not check custom panel locations"
