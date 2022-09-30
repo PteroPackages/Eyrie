@@ -29,7 +29,7 @@ module Eyrie::Installer
   def self.run(root : String, source : String, version : Version, ver : SemanticVersion) : Nil
   end
 
-  private def self.install(root : String, mod : Module, version : Version) : Nil
+  def self.install(root : String, mod : Module, version : Version) : Nil
     lock = Lockfile.fetch
     Log.vinfo "checking version compatibility"
 
@@ -41,9 +41,9 @@ module Eyrie::Installer
 
     begin
       if mod.source.type.local?
-        Resolver.pull_from_local mod
+        Resolver.pull_from_local mod.name, mod.source.uri
       else
-        Resolver.pull_from_git mod
+        Resolver.pull_from_git mod.name, mod.source.uri
       end
     rescue ex : Error
       Log.fatal ex.format

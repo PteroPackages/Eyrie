@@ -1,13 +1,13 @@
 module Eyrie::Resolver
-  def self.pull_from_local(mod : Module) : Nil
+  def self.pull_from_local(name : String, uri : String) : Nil
     # check if directory exists or if forward eyrie.yml exists
     # resolve files and move to cache
   end
 
-  def self.pull_from_git(mod : Module) : Nil
-    cache = File.join "/var/eyrie/cache", mod.name
+  def self.pull_from_git(name : String, uri : String) : Nil
+    cache = File.join "/var/eyrie/cache", name
 
-    if ex = exec "git clone -c core.askPass=true #{mod.source.not_nil!.uri} #{cache}"
+    if ex = exec "git clone -c core.askPass=true #{uri} #{cache}"
       raise Error.new ex, :pull_git_failed
     end
   end
