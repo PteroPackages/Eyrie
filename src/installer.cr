@@ -66,7 +66,7 @@ module Eyrie::Installer
       Log.vinfo [
         "included #{includes.size} files, excluded #{excludes.size} files",
         "source: #{dir}",
-        "destination: #{root}"
+        "destination: #{root}",
       ]
 
       begin

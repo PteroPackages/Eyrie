@@ -41,19 +41,19 @@ module Eyrie::Util
     path = File.join(path, "config", "app.php")
     Log.fatal [
       "could not find the panel config file",
-      "make sure you have installed your panel correctly then retry"
+      "make sure you have installed your panel correctly then retry",
     ] unless File.exists? path
 
     data = File.read path
     data =~ /'version' => '(.*)'/
     Log.fatal [
       "could not get panel version from the config",
-      "please ensure a valid panel version is set in your config"
+      "please ensure a valid panel version is set in your config",
     ] unless $1?
 
     Log.fatal [
       "canary builds of the panel are not supported",
-      "please install an official version of the panel to use this application"
+      "please install an official version of the panel to use this application",
     ] if $1 == "canary"
 
     begin

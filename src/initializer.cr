@@ -34,7 +34,7 @@ module Eyrie::Initializer
       "Welcome to the Eyrie interactive module setup",
       "This setup will walk you through creating an eyrie module file",
       "If you want to skip this setup, exit and run 'eyrie init --skip'",
-      "Press '^C' (Ctrl+C) at any time to exit\n\n"
+      "Press '^C' (Ctrl+C) at any time to exit\n\n",
     ]
 
     mod = Module.default

@@ -6,11 +6,11 @@ module Eyrie::Commands
       @usage << "install <name> [-t|--type <type>] [-v|--verbose] [--version <v>] [-r|--root <dir>] [options]"
       @usage << "install <source> [-t|--type <type>] [-v|--verbose] [--version <v>] [-r|--root <dir>] [options]"
 
-      add_argument "source", required: true
-      add_option "type", short: "t", kind: :string, default: "local"
-      add_option "verbose", short: "v"
-      add_option "version", kind: :string, default: "*"
-      add_option "root", short: "r", kind: :string, default: ""
+      add_argument "source", desc: "the name or uri to the source", required: true
+      add_option "type", short: "t", desc: "the type of source", kind: :string, default: "local"
+      add_option "verbose", short: "v", desc: "output debug and verbose logs"
+      add_option "version", desc: "the version of the module to install", kind: :string, default: "*"
+      add_option "root", short: "r", desc: "the root directory of the panel", kind: :string, default: ""
       set_global_options
     end
 
@@ -19,7 +19,7 @@ module Eyrie::Commands
 
       type = Source::Type.parse?(options.get!("type")) || Log.fatal [
         "Invalid module source type specified",
-        "Expected: local, git, github, gitlab"
+        "Expected: local, git, github, gitlab",
       ]
       version = Version.parse options.get!("version")
 

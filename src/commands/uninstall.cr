@@ -6,7 +6,7 @@ module Eyrie::Commands
       @usage << "uninstall <name> [-r|--root <dir>] [-v|--verbose] [options]"
 
       add_argument "name", desc: "the name of the module", required: true
-      add_option "root", short: "r", kind: :string, default: ""
+      add_option "root", short: "r", desc: "the root directory of the panel", kind: :string, default: ""
       add_option "verbose", short: "v", desc: "output debug and verbose logs"
       set_global_options
     end

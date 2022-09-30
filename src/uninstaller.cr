@@ -3,7 +3,7 @@ module Eyrie::Uninstaller
     Log.warn [
       "Uninstalling a module is not a secure process",
       "Make sure to replace any overriden module files with the panel's default files",
-      "or run the panel upgrade command after this"
+      "or run the panel upgrade command after this",
     ]
 
     Dir.cd(root) do
@@ -22,7 +22,7 @@ module Eyrie::Uninstaller
       Log.info "Removing module files from panel..."
       Log.vinfo [
         "included #{includes.size} files, excluded #{excludes.size} files",
-        "source: #{root}"
+        "source: #{root}",
       ]
 
       begin

@@ -193,10 +193,10 @@ module Eyrie
 
       version = Version.parse data["version"].as_s
       authors = if data["authors"]?
-        data["authors"].as_a.map { |a| Author.new(a) }
-      else
-        [] of Author
-      end
+                  data["authors"].as_a.map { |a| Author.new(a) }
+                else
+                  [] of Author
+                end
 
       source = Source.new data["source"]
       deps = data["dependencies"]?.try { |d| Deps.new(d) } || Deps.new(nil, nil)
@@ -241,13 +241,13 @@ module Eyrie
 
     def format(io : IO) : Nil
       authors = if @authors.empty?
-        "none set"
-      else
-        @authors
-          .select(&.name)
-          .map { |a| %(- #{a.name}#{" <#{a.contact}>" if a.contact}) }
-          .join('\n')
-      end
+                  "none set"
+                else
+                  @authors
+                    .select(&.name)
+                    .map { |a| %(- #{a.name}#{" <#{a.contact}>" if a.contact}) }
+                    .join('\n')
+                end
 
       io << <<-FMT
       name:     #{@name}
