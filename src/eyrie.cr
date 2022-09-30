@@ -29,7 +29,7 @@ macro set_global_options
 end
 
 module Eyrie
-  VERSION = "0.2.0"
+  VERSION = "1.0.0-beta"
 
   def self.run : Nil
     app = CLI::Application.new

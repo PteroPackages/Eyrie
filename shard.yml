@@ -1,6 +1,6 @@
 name: eyrie
 description: Module manager for Pterodactyl addons and themes
-version: 0.1.0
+version: 1.0.0-beta
 crystal: 1.5.0
 
 repository: https://github.com/PteroPackages/Eyrie
