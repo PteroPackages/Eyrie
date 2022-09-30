@@ -87,6 +87,13 @@ module Eyrie
       File.write "/var/eyrie/module.lock", to_yaml
     end
 
+    def delete(mod : Module) : Nil
+      File.delete? File.join("/var/eyrie/save", mod.name + ".save.yml")
+      @modules.reject! { |m| m.name == mod.name }
+
+      save
+    end
+
     def to_yaml : String
       YAML.build do |yaml|
         yaml.mapping do

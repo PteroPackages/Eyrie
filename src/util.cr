@@ -88,6 +88,10 @@ module Eyrie::Util
   rescue
   end
 
+  def rm_rf(paths : Array(String)) : Nil
+    paths.each { |p| rm_r p }
+  end
+
   def copy(srcs : Array(String), dest : String) : Nil
     srcs.each do |src|
       if File.directory? src
