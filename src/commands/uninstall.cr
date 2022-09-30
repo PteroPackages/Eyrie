@@ -20,6 +20,8 @@ module Eyrie::Commands
       Log.fatal "Module '#{name}' not found or is not installed" unless mod
 
       root = Util.get_panel_path options.get!("root")
+      Log.fatal "Cannot write to panel directory (are you root?)" unless File.writable? root
+
       taken = Time.measure do
         Uninstaller.run mod, root
         lock.delete mod

@@ -11,6 +11,7 @@ module Eyrie::Util
       end
     end
 
+    Log.fatal "Cannot write to cache directory (are you root?)" unless File.writable? "/var/eyrie/cache"
     clear_cache_dir
 
     unless Dir.exists? "/var/eyrie/save"
@@ -18,9 +19,11 @@ module Eyrie::Util
       begin
         Dir.mkdir_p "/var/eyrie/save"
       rescue ex
-        Log.fatal ex, "failed to creat cache directory"
+        Log.fatal ex, "failed to create save directory"
       end
     end
+
+    Log.fatal "Cannot write to save directory (are you root?)" unless File.writable? "/var/eyrie/save"
   end
 
   def get_panel_path(path : String) : String
