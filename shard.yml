@@ -1,5 +1,5 @@
 name: eyrie
-description: pterodactyl module manager (addons and themes)
+description: Module manager for Pterodactyl addons and themes
 version: 0.1.0
 crystal: 1.5.0
 

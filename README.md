@@ -1,6 +1,6 @@
 <h1 align="center">Eyrie</h1>
 <h3 align="center">[ˈɪəri, ˈʌɪri, ˈɛːri]</h3>
-<p align="center"><i>A module manager for Pterodactyl addons and themes</i>
+<p align="center">Module manager for Pterodactyl addons and themes</p>
 
 ---
 Eyrie is a command line tool designed for managing addons and themes (modules) for the [Pterodactyl Game Panel](https://pterodactyl.io), using a familiar module file system for ease of management and flexible configuration.
