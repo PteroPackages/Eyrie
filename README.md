@@ -1,5 +1,5 @@
 <h1 align="center">Eyrie</h1>
-<h3 align="center">[ˈɪəri, ˈʌɪri, ˈɛːri]</h3>
+<h3 align="center">[ˈɪəri, ˈʌɪri, ˈɛːri']</h3>
 <p align="center">Module manager for Pterodactyl addons and themes</p>
 
 ---
