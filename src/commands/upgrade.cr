@@ -5,26 +5,26 @@ module Eyrie::Commands
     def setup : Nil
       @name = "upgrade"
       @description = "Upgrades installed modules by name or that are installed."
-      @usage << "upgrade [name] [-r|--root <dir>] [-v|--verbose] [options]"
+      add_usage "upgrade [name] [-r|--root <dir>] [-v|--verbose] [options]"
 
       add_argument "name", desc: "the name of the module", required: false
-      add_option "root", short: "r", desc: "the root directory of the panel", kind: :string, default: ""
-      add_option "verbose", short: "v", desc: "output debug and verbose logs"
+      add_option 'r', "root", desc: "the root directory of the panel", has_value: true, default: ""
+      add_option 'v', "verbose", desc: "output debug and verbose logs"
       set_global_options
     end
 
-    def execute(args, options) : Nil
+    def run(args, options) : Nil
       Log.configure options
 
       lock = Lockfile.fetch
-      name = args.get "name"
+      name = args.get("name").try &.as_s
 
       modules = lock.modules
       modules.select! { |m| m.name == name } if name
       Log.fatal "No modules found to upgrade" if modules.empty?
 
       Util.run_system_checks
-      root = Util.get_panel_path options.get!("root")
+      root = Util.get_panel_path options.get!("root").as_s
       ver = Util.get_panel_version root
 
       taken = Time.measure do

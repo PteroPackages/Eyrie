@@ -2,23 +2,22 @@ module Eyrie::Commands
   class SetupCommand < CLI::Command
     include Base
 
-    def initialize(app)
+    def initialize
+      super
       @errors = 0
-
-      super app
     end
 
     def setup : Nil
       @name = "setup"
       @description = "Setup and checks Eyrie configurations and directories"
-      @usage << "setup [-c|--check] [-v|--verbose] [options]"
+      add_usage "setup [-c|--check] [-v|--verbose] [options]"
 
-      add_option "check", short: "c", desc: "only perform checks"
-      add_option "verbose", short: "v", desc: "output debug and verbose logs"
+      add_option 'c', "check", desc: "only perform checks"
+      add_option 'v', "verbose", desc: "output debug and verbose logs"
       set_global_options
     end
 
-    def execute(args, options) : Nil
+    def run(args, options) : Nil
       Log.configure options
 
       check_only = options.has? "check"

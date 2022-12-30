@@ -25,30 +25,61 @@ Colorize.on_tty_only!
 macro set_global_options
   add_option "no-color", desc: "disable ansi color codes"
   add_option "trace", desc: "log error stack traces"
-  add_option "help", short: "h", desc: "get help information"
+  add_option 'h', "help", desc: "get help information"
 end
 
 module Eyrie
   VERSION = "1.0.0-beta"
 
-  def self.run : Nil
-    app = CLI::Application.new
-    app.help_template = Commands::RootCommand.help_template
+  class App < CLI::Command
+    def setup : Nil
+      @name = "eyrie"
 
-    app.add_command Commands::RootCommand, default: true
-    app.add_command Commands::SetupCommand
-    app.add_command Commands::InitCommand
-    app.add_command Commands::InstallCommand
-    app.add_command Commands::ListCommand
-    app.add_command Commands::UninstallCommand
-    app.add_command Commands::UpgradeCommand
+      add_option 'v', "version", desc: "get version information"
 
-    app.run ARGV
+      add_command Commands::SetupCommand.new
+      add_command Commands::InitCommand.new
+      add_command Commands::InstallCommand.new
+      add_command Commands::ListCommand.new
+      add_command Commands::UninstallCommand.new
+      add_command Commands::UpgradeCommand.new
+    end
+
+    def help_template : String
+      <<-HELP
+      Pterodactyl Module Manager (addons and themes)
+
+      Usage:
+              eyrie [options] <command> [arguments]
+
+      Commands:
+              init        initializes a module file
+              install     installs modules from sources
+              list        lists all installed modules
+              setup       setup eyrie configurations
+              uninstall   uninstalls a module
+              upgrade     upgrades installed modules
+
+      Global Options:
+              --no-color      disable ansi color codes
+              --trace         log error stack traces
+              -h, --help      get help information
+              -v, --version   get version information
+      HELP
+    end
+
+    def run(args, options) : Nil
+      if options.has? "version"
+        puts "Eyrie version #{VERSION}"
+      else
+        puts help_template
+      end
+    end
   end
 end
 
 begin
-  Eyrie.run
+  Eyrie::App.new.execute ARGV
 rescue Eyrie::SystemExit
 rescue ex
   Eyrie::Log.error ex

@@ -5,14 +5,14 @@ module Eyrie::Commands
     def setup : Nil
       @name = "init"
       @description = "Initializes a module file in the current directory."
-      @usage << "create [-f|--force] [-s|--skip] [options]"
+      add_usage "create [-f|--force] [-s|--skip] [options]"
 
-      add_option "force", short: "f", desc: "force initialize the module"
-      add_option "skip", short: "s", desc: "skip the interactive setup"
+      add_option 'f', "force", desc: "force initialize the module"
+      add_option 's', "skip", desc: "skip the interactive setup"
       set_global_options
     end
 
-    def execute(args, options) : Nil
+    def run(args, options) : Nil
       Log.configure options
 
       Initializer.run options.has?("force"), options.has?("skip")

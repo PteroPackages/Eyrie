@@ -5,17 +5,17 @@ module Eyrie::Commands
     def setup : Nil
       @name = "list"
       @description = "Lists all installed modules and gets information on a specific module."
-      @usage << "list [-n|--name <name>] [options]"
+      add_usage "list [-n|--name <name>] [options]"
 
-      add_option "name", short: "n", desc: "the name of the module", kind: :string
+      add_option 'n', "name", desc: "the name of the module", has_value: true
       set_global_options
     end
 
-    def execute(args, options) : Nil
+    def run(args, options) : Nil
       Log.configure options
 
       lock = Lockfile.fetch
-      if name = options.get "name"
+      if name = options.get("name").try &.as_s
         mod = lock.get_saved.find { |m| m.name == name }
         Log.fatal "Module '#{name}' not found or is not installed" unless mod
 
