@@ -51,4 +51,4 @@ Upgrades a package, or all installed ones if not specified, on the system by che
 
 This repository is managed under the MIT license.
 
-© 2022 PteroPackages
+© 2022-present PteroPackages
